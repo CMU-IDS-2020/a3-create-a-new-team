@@ -1,37 +1,94 @@
+from collections import Counter
 import altair as alt
 import numpy as np
+import os
 import pandas as pd
 import streamlit as st
 import time
-import os
 
 
 @st.cache
 def load_data(directory="./archive"):
     path_dc = os.path.join(directory, 'dc-wikia-data.csv')
     path_marvel = os.path.join(directory, 'marvel-wikia-data.csv')
-    return pd.read_csv(path_dc), pd.read_csv(path_marvel)
+    dc = pd.read_csv(path_dc)
+    marvel = pd.read_csv(path_marvel)
+    dc.loc[dc['EYE'] == 'Auburn Hair', 'HAIR'] = 'Auburn Hair'
+    dc.loc[dc['EYE'] == 'Auburn Hair', 'EYE'] = np.nan
+    return dc, marvel
 
 
 def show_raw_data(dc, marvel):
     if st.checkbox("Show raw data"):
-        st.write("DC", dc)
-        st.write("Marvel", marvel)
-        if st.checkbox("debug"):
-            st.write('dc align:', str(dc['ALIGN'].drop_duplicates().tolist()))
-            st.write('dc id:', str(dc['ID'].drop_duplicates().tolist()))
-            st.write('dc char:', str(dc['']))
-            st.write('marvel align:', str(
-                marvel['ALIGN'].drop_duplicates().tolist()))
-            st.write('marvel id:', str(
-                marvel['ID'].drop_duplicates().tolist()))
+        col1, col2 = st.beta_columns([2, 1])
+        with col1:
+            st.write("DC", dc)
+        with col2:
+            option = st.selectbox("DC keys", sorted(dc.keys()))
+            st.write(Counter(dc[option].tolist()))
+        col1, col2 = st.beta_columns([2, 1])
+        with col1:
+            st.write("Marvel", marvel)
+        with col2:
+            option = st.selectbox("Marvel keys", sorted(marvel.keys()))
+            st.write(Counter(marvel[option].tolist()))
+        st.write([i for i in dc.keys() if i in marvel.keys()])
+
+
+def merge(dc, marvel):
+    dc['TYPE'] = 'DC'
+    marvel['TYPE'] = 'Marvel'
+    data = pd.concat([dc, marvel])
+    data['count'] = 1
+    return data
+
+
+def show_most_appear_name(data):
+    pass
+
+
+def show_character_distribution(data):
+    st.markdown('---')
+    st.text('Brief description: TODO')
+    # collect user input
+    col1, col2 = st.beta_columns([3, 1])
+    with col1:
+        plot = st.empty()
+    with col2:
+        x = st.selectbox("Base feature", ('ALIGN', 'ID'))
+        y = st.selectbox("Target feature", ('EYE', 'HAIR', 'SEX', 'GSM'))
+        dataset = st.multiselect("Dataset", ["DC", "Marvel"], ["DC"])
+    # process data
+    if len(dataset) == 0:
+        plot.write('At least one dataset need to be selected.')
+        return
+    elif len(dataset) == 1:
+        data = data[data['TYPE'] == dataset[0]]
+    data = data.dropna(subset=[y])
+    plot.write(alt.Chart(data).mark_bar().encode(
+        x='count(count)',
+        y=x,
+        color=y,
+    ))
+
+
+def show_hotmap(data):
+    pass
 
 
 if __name__ == '__main__':
     st.title('Characteristic in DC/Marvel')
     dc, marvel = load_data()
     show_raw_data(dc, marvel)
+    data = merge(dc, marvel)
+    # 第一个bubble是visualize符合某一特征的角主要角色（的名字）
+    show_most_appear_name(data)
+    # 第二个是不管出现次数的 是看角色数量关于特征的分布
+    show_character_distribution(data)
+    # 第三个是以出现次数作为weights 看对于每种align来说比较常见的feature组合
 
+    #
+    show_hotmap(data)
 
 # for reference below
 # progress_bar = st.progress(0)
@@ -42,6 +99,10 @@ if __name__ == '__main__':
 #     columns=('col %d' % i for i in range(20)))
 # st.dataframe(df.style.highlight_max(axis=0))
 # status_text.text('Done!')
+# option = st.selectbox(
+#     'How would you like to be contacted?',
+#     ('Email', 'Home phone', 'Mobile phone'))
+# st.write('You selected:', option)
 # options = st.multiselect(
 #     'What are your favorite colors',
 #     ['Green', 'Yellow', 'Red', 'Blue'],
