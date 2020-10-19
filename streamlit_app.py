@@ -15,12 +15,8 @@ MAX_WIDTH = 700
 def load_data(directory="./archive"):
     path_dc = os.path.join(directory, 'dc-wikia-data.csv')
     path_marvel = os.path.join(directory, 'marvel-wikia-data.csv')
-    dc = pd.read_csv(path_dc)
-    marvel = pd.read_csv(path_marvel)
-    dc.loc[dc['EYE'] == 'Auburn Hair', 'HAIR'] = 'Auburn Hair'
-    dc.loc[dc['EYE'] == 'Auburn Hair', 'EYE'] = np.nan
-    marvel['YEAR'] = marvel['Year']
-    return dc, marvel
+    # the Auburn Hair and Year issues have resolved in the csv file
+    return pd.read_csv(path_dc), pd.read_csv(path_marvel)
 
 
 def show_raw_data(dc, marvel):
@@ -61,8 +57,9 @@ def filter_year(data, key="Year range"):
 
 
 def show_most_appear_name(data):
+    """符合某一特征的角主要角色（的名字）"""
     st.markdown('---')
-    st.text('Brief description: TODO')
+    st.text('Brief description for show_most_appear_name: TODO')
     plot = st.empty()
     col = st.beta_columns(3)
     choice = {}
@@ -91,7 +88,8 @@ def show_most_appear_name(data):
             data = data[data[key.upper()].isnull()]
         elif value != 'ALL':
             data = data[data[key.upper()] == value]
-    freq = {k: v for k, v in zip(data['name'], data['APPEARANCES'])}
+    freq = {k.replace(r'\"', ''): v for k, v in zip(
+        data['name'], data['APPEARANCES'])}
     if len(freq) > 0:
         wc = WordCloud(background_color="white", width=MAX_WIDTH)
         plot.image(wc.generate_from_frequencies(freq).to_image())
@@ -100,8 +98,9 @@ def show_most_appear_name(data):
 
 
 def show_character_distribution(data):
+    """不管出现次数的 角色数量关于特征的分布"""
     st.markdown('---')
-    st.text('Brief description: TODO')
+    st.text('Brief description for show_character_distribution: TODO')
     # collect user input
     plot = st.empty()
     col1, col2, col3 = st.beta_columns(3)
@@ -128,6 +127,51 @@ def show_character_distribution(data):
         color=y,
         tooltip=y,
     ).properties(width=MAX_WIDTH))
+
+
+def show_combination(data):
+    """以出现次数作为weights 看对于每种align来说比较常见的feature组合"""
+    st.markdown('---')
+    st.text('Brief description for show_combination: TODO')
+    # collect user input
+    plot = st.empty()
+    col1, col2 = st.beta_columns(2)
+    with col1:
+        align = st.selectbox("Which ALIGN", ['ALL'] + list(set(data['ALIGN'])))
+        id = st.selectbox("Which ID", ['ALL'] + list(set(data['ID'])))
+    with col2:
+        y = st.multiselect("Target feature for combination",
+                           ('EYE', 'HAIR', 'SEX', 'GSM'), ['EYE'])
+        dataset = st.multiselect("Dataset for combination",
+                                 ["DC", "Marvel"], ["DC"])
+    # process data
+    if len(dataset) == 0:
+        plot.write('At least one dataset need to be selected.')
+        return
+    elif len(dataset) == 1:
+        data = data[data['TYPE'] == dataset[0]]
+    data = filter_year(data, 'Year for combination')
+    data = data.dropna(subset=y + ['APPEARANCES'])
+    data['APPEARANCES'] = np.log(data['APPEARANCES'] + 1)
+    if align != 'ALL':
+        if isinstance(align, str):
+            data = data[data['ALIGN'] == align]
+        else:  # nan
+            data = data[data['ALIGN'].isnull()]
+    if id != 'ALL':
+        if isinstance(data, str):
+            data = data[data['ID'] == id]
+        else:  # nan
+            data = data[data['ID'].isnull()]
+    data = data[y + ['APPEARANCES', 'TYPE', 'name']]
+    data = data.groupby(y).agg({'APPEARANCES': 'sum'})
+    freq_dict = {', '.join(data.index[i]): data['APPEARANCES'][i]
+                 for i in range(len(data))}
+    if len(freq_dict) > 0:
+        wc = WordCloud(background_color="white", width=MAX_WIDTH)
+        plot.image(wc.generate_from_frequencies(freq_dict).to_image())
+    else:
+        plot.write('No such combination :(')
 
 
 def show_heatmap(data):
@@ -160,13 +204,9 @@ if __name__ == '__main__':
     dc, marvel = load_data()
     show_raw_data(dc, marvel)
     data = merge(dc, marvel)
-    # 第一个bubble是visualize符合某一特征的角主要角色（的名字）
     show_most_appear_name(data)
-    # 第二个是不管出现次数的 是看角色数量关于特征的分布
     show_character_distribution(data)
-    # 第三个是以出现次数作为weights 看对于每种align来说比较常见的feature组合
-
-    #
+    show_combination(data)
     show_heatmap(data)
 
 # for reference below
