@@ -165,8 +165,10 @@ def show_combination(data):
             data = data[data['ID'].isnull()]
     data = data[y + ['APPEARANCES', 'TYPE', 'name']]
     data = data.groupby(y).agg({'APPEARANCES': 'sum'})
-    freq_dict = {', '.join(data.index[i]): data['APPEARANCES'][i]
-                 for i in range(len(data))}
+    freq_dict = {
+        k if isinstance(k, str) else ', '.join(k): v
+        for k, v in zip(data.index, data['APPEARANCES'])
+    }
     if len(freq_dict) > 0:
         wc = WordCloud(background_color="white", width=MAX_WIDTH)
         plot.image(wc.generate_from_frequencies(freq_dict).to_image())
