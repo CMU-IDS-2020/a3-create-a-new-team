@@ -48,7 +48,7 @@ def merge(dc, marvel):
 
 
 def filter_year(data, key="Year range"):
-    min_year, max_year = data['YEAR'].min(), data['YEAR'].max()
+    min_year, max_year = int(data['YEAR'].min()), int(data['YEAR'].max())
     year = st.slider(
         key,
         min_value=min_year,
