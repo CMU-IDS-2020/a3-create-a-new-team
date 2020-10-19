@@ -1,3 +1,6 @@
-streamlit
-pandas
 altair
+numpy
+pandas
+scipy
+streamlit
+wordcloud
