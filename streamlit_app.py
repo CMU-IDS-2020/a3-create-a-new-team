@@ -1,11 +1,14 @@
 from collections import Counter
-from datetime import datetime
+from scipy.stats import chisquare
+from wordcloud import WordCloud
 import altair as alt
 import numpy as np
 import os
 import pandas as pd
 import streamlit as st
-import time
+
+
+MAX_WIDTH = 700
 
 
 @st.cache(allow_output_mutation=True)
@@ -16,6 +19,7 @@ def load_data(directory="./archive"):
     marvel = pd.read_csv(path_marvel)
     dc.loc[dc['EYE'] == 'Auburn Hair', 'HAIR'] = 'Auburn Hair'
     dc.loc[dc['EYE'] == 'Auburn Hair', 'EYE'] = np.nan
+    marvel['YEAR'] = marvel['Year']
     return dc, marvel
 
 
@@ -43,8 +47,56 @@ def merge(dc, marvel):
     return data
 
 
+def filter_year(data, key="Year range"):
+    min_year, max_year = data['YEAR'].min(), data['YEAR'].max()
+    year = st.slider(
+        key,
+        min_value=min_year,
+        max_value=max_year,
+        value=(min_year, max_year)
+    )
+    data = data[data['YEAR'] >= year[0]]
+    data = data[data['YEAR'] <= year[1]]
+    return data
+
+
 def show_most_appear_name(data):
-    pass
+    st.markdown('---')
+    st.text('Brief description: TODO')
+    plot = st.empty()
+    col = st.beta_columns(3)
+    choice = {}
+    layout_id = [0, 0, 1, 1, 2, 2]
+    layout_index = ['Align', 'ID', 'Eye', 'Hair', 'Sex', 'GSM']
+    for col_id, index in zip(layout_id, layout_index):
+        with col[col_id]:
+            choice[index] = st.selectbox(
+                index, ["ALL"] + list(set(data[index.upper()])))
+    col1, col2 = st.beta_columns(2)
+    with col1:
+        threshold = st.slider(
+            "Appearance threshold", 0, int(data['APPEARANCES'].max()) // 2, 50)
+    with col2:
+        dataset = st.multiselect(
+            "Dataset for most appear", ["DC", "Marvel"], ["DC"])
+    if len(dataset) == 0:
+        plot.write('At least one dataset need to be selected.')
+        return
+    elif len(dataset) == 1:
+        data = data[data['TYPE'] == dataset[0]]
+    data = filter_year(data, "Year range for most appear")
+    data = data[data['APPEARANCES'] >= threshold]
+    for key, value in choice.items():
+        if not isinstance(value, str) and np.isnan(value):
+            data = data[data[key.upper()].isnull()]
+        elif value != 'ALL':
+            data = data[data[key.upper()] == value]
+    freq = {k: v for k, v in zip(data['name'], data['APPEARANCES'])}
+    if len(freq) > 0:
+        wc = WordCloud(background_color="white", width=MAX_WIDTH)
+        plot.image(wc.generate_from_frequencies(freq).to_image())
+    else:
+        plot.write('No such person :(')
 
 
 def show_character_distribution(data):
@@ -66,24 +118,41 @@ def show_character_distribution(data):
     elif len(dataset) == 1:
         data = data[data['TYPE'] == dataset[0]]
     data = data.dropna(subset=[y])
-    year = st.slider(
-        "Year range",
-        min_value=data['Year'].min(),
-        max_value=data['Year'].max(),
-        value=(data['Year'].min(), data['Year'].max())
-    )
-    data = data[data['Year'] >= year[0]]
-    data = data[data['Year'] <= year[1]]
+    data = filter_year(data)
     plot.write(alt.Chart(data).mark_bar().encode(
-        x='count(count)',
+        x=alt.X(
+            'count(count)',
+            axis=alt.Axis(title="Count of different " + y.lower())
+        ),
         y=x,
         color=y,
         tooltip=y,
-    ))
+    ).properties(width=MAX_WIDTH))
 
 
 def show_heatmap(data):
-    pass
+    st.markdown('---')
+    st.text('Brief description: TODO')
+    plot = st.empty()
+    x = ['ALIGN', 'ID']
+    y = ['EYE', 'HAIR', 'SEX', 'GSM']
+    dataset = st.multiselect("Dataset for heatmap", ["DC", "Marvel"], ["DC"])
+    if len(dataset) == 0:
+        plot.write('At least one dataset need to be selected.')
+        return
+    elif len(dataset) == 1:
+        data = data[data['TYPE'] == dataset[0]]
+    data = filter_year(data, "Year range for heatmap")
+    data = data.apply(lambda x: pd.factorize(x)[0]) + 1
+    for target_feature in y:
+        result = data.dropna(subset=[target_feature] + x)[[target_feature] + x]
+        result
+        result = pd.DataFrame(
+            [chisquare(result[b].values, f_exp=result.values.T, axis=1)[0]
+             for b in result],
+            columns=result.keys(),
+            index=result.keys())
+        st.write(result, "why is it still NaN???")
 
 
 if __name__ == '__main__':
