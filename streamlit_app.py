@@ -1,4 +1,5 @@
 from collections import Counter
+from datetime import datetime
 import altair as alt
 import numpy as np
 import os
@@ -7,7 +8,7 @@ import streamlit as st
 import time
 
 
-@st.cache
+@st.cache(allow_output_mutation=True)
 def load_data(directory="./archive"):
     path_dc = os.path.join(directory, 'dc-wikia-data.csv')
     path_marvel = os.path.join(directory, 'marvel-wikia-data.csv')
@@ -32,7 +33,6 @@ def show_raw_data(dc, marvel):
         with col2:
             option = st.selectbox("Marvel keys", sorted(marvel.keys()))
             st.write(Counter(marvel[option].tolist()))
-        st.write([i for i in dc.keys() if i in marvel.keys()])
 
 
 def merge(dc, marvel):
@@ -51,12 +51,13 @@ def show_character_distribution(data):
     st.markdown('---')
     st.text('Brief description: TODO')
     # collect user input
-    col1, col2 = st.beta_columns([3, 1])
+    plot = st.empty()
+    col1, col2, col3 = st.beta_columns(3)
     with col1:
-        plot = st.empty()
-    with col2:
         x = st.selectbox("Base feature", ('ALIGN', 'ID'))
+    with col2:
         y = st.selectbox("Target feature", ('EYE', 'HAIR', 'SEX', 'GSM'))
+    with col3:
         dataset = st.multiselect("Dataset", ["DC", "Marvel"], ["DC"])
     # process data
     if len(dataset) == 0:
@@ -65,14 +66,23 @@ def show_character_distribution(data):
     elif len(dataset) == 1:
         data = data[data['TYPE'] == dataset[0]]
     data = data.dropna(subset=[y])
+    year = st.slider(
+        "Year range",
+        min_value=data['Year'].min(),
+        max_value=data['Year'].max(),
+        value=(data['Year'].min(), data['Year'].max())
+    )
+    data = data[data['Year'] >= year[0]]
+    data = data[data['Year'] <= year[1]]
     plot.write(alt.Chart(data).mark_bar().encode(
         x='count(count)',
         y=x,
         color=y,
+        tooltip=y,
     ))
 
 
-def show_hotmap(data):
+def show_heatmap(data):
     pass
 
 
@@ -88,7 +98,7 @@ if __name__ == '__main__':
     # 第三个是以出现次数作为weights 看对于每种align来说比较常见的feature组合
 
     #
-    show_hotmap(data)
+    show_heatmap(data)
 
 # for reference below
 # progress_bar = st.progress(0)
