@@ -150,10 +150,10 @@ def show_combination(data):
     col1, col2 = st.beta_columns(2)
     with col1:
         align = st.selectbox("Which ALIGN", ['ALL'] + list(set(data['ALIGN'])))
-        id = st.selectbox("Which ID", ['ALL'] + list(set(data['ID'])))
-    with col2:
         y = st.multiselect("Target feature for combination",
                            ('EYE', 'HAIR', 'SEX', 'GSM'), ['EYE'])
+    with col2:
+        id = st.selectbox("Which ID", ['ALL'] + list(set(data['ID'])))
         dataset = st.multiselect("Dataset for combination",
                                  ["DC", "Marvel"], ["DC"])
     # process data
@@ -185,7 +185,6 @@ def show_combination(data):
         wc = WordCloud(background_color="white", width=MAX_WIDTH * 2)
         plot.image(wc.generate_from_frequencies(freq_dict).to_image(),
                    use_column_width=True)
-        data, len(data)
         data['NAME'] = list(freq_dict.keys())
         plot2.write(alt.Chart(data).mark_bar().encode(
             x='APPEARANCES',
