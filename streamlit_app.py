@@ -91,8 +91,9 @@ def show_most_appear_name(data):
     freq = {k.replace(r'\"', ''): v for k, v in zip(
         data['name'], data['APPEARANCES'])}
     if len(freq) > 0:
-        wc = WordCloud(background_color="white", width=MAX_WIDTH)
-        plot.image(wc.generate_from_frequencies(freq).to_image())
+        wc = WordCloud(background_color="white", width=MAX_WIDTH * 2)
+        plot.image(wc.generate_from_frequencies(freq).to_image(),
+                   use_column_width=True)
     else:
         plot.write('No such person :(')
 
@@ -170,8 +171,9 @@ def show_combination(data):
         for k, v in zip(data.index, data['APPEARANCES'])
     }
     if len(freq_dict) > 0:
-        wc = WordCloud(background_color="white", width=MAX_WIDTH)
-        plot.image(wc.generate_from_frequencies(freq_dict).to_image())
+        wc = WordCloud(background_color="white", width=MAX_WIDTH * 2)
+        plot.image(wc.generate_from_frequencies(freq_dict).to_image(),
+                   use_column_width=True)
     else:
         plot.write('No such combination :(')
 
