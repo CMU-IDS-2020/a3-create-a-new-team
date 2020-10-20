@@ -1,5 +1,5 @@
 from collections import Counter
-from scipy.stats import chisquare
+from scipy.stats import chisquare, chi2_contingency
 from wordcloud import WordCloud
 import altair as alt
 import numpy as np
@@ -197,6 +197,7 @@ def show_combination(data):
 
 
 def show_heatmap(data):
+    # https: // stackoverflow.com / questions / 48035381 / correlation - among - multiple - categorical - variables - pandas
     st.markdown('---')
     st.text('Brief description: TODO')
     plot = st.empty()
@@ -209,16 +210,35 @@ def show_heatmap(data):
     elif len(dataset) == 1:
         data = data[data['TYPE'] == dataset[0]]
     data = filter_year(data, "Year range for heatmap")
+
+    # treat NaNs in `GSM` as the majority group
+    data.replace({"GSM": {np.nan: "N/A",}}, inplace=True)
     data = data.apply(lambda x: pd.factorize(x)[0]) + 1
     for target_feature in y:
         result = data.dropna(subset=[target_feature] + x)[[target_feature] + x]
-        result
-        result = pd.DataFrame(
-            [chisquare(result[b].values, f_exp=result.values.T, axis=1)[0]
-             for b in result],
-            columns=result.keys(),
-            index=result.keys())
-        st.write(result, "why is it still NaN???")
+        # st.write(np.isfinite(result).all())
+        # result = pd.DataFrame(
+        #     [chisquare(result[b].values, f_exp=result.values.T, axis=1)[0]
+        #      for b in result],
+        #     columns=result.keys(),
+        #     index=result.keys())
+        factors_paired = [(i, j) for i in result.columns.values for j in result.columns.values]
+
+        chi2, p_values = [], []
+
+        for f in factors_paired:
+            if f[0] != f[1]:
+                chitest = chi2_contingency(pd.crosstab(result[f[0]], result[f[1]]))
+                chi2.append(chitest[0])
+                p_values.append(chitest[1])
+            else:  # for same factor pair
+                chi2.append(0)
+                p_values.append(0)
+
+        chi2 = np.array(chi2).reshape((len(x) + 1, len(x) + 1))  # shape it as a matrix
+        chi2 = pd.DataFrame(chi2, index=result.columns.values, columns=result.columns.values)  # then a df for convenience
+        # st.write(chi2, "why is it still NaN???")
+        # st.write(result, "why is it still NaN???")
 
 
 if __name__ == '__main__':
