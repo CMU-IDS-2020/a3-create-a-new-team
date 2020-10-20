@@ -16,7 +16,8 @@ def load_data(directory="./archive"):
     path_dc = os.path.join(directory, 'dc-wikia-data.csv')
     path_marvel = os.path.join(directory, 'marvel-wikia-data.csv')
     # the Auburn Hair and Year issues have resolved in the csv file
-    return pd.read_csv(path_dc), pd.read_csv(path_marvel)
+    dc, marvel = pd.read_csv(path_dc), pd.read_csv(path_marvel)
+    return merge(dc, marvel), dc, marvel
 
 
 def show_raw_data(dc, marvel):
@@ -38,6 +39,12 @@ def show_raw_data(dc, marvel):
 def merge(dc, marvel):
     dc['TYPE'] = 'DC'
     marvel['TYPE'] = 'Marvel'
+    marvel.replace({"SEX": {"Genderfluid Characters": "Genderless Characters",
+                            "Agender Characters": "Genderless Characters"}}, inplace=True)
+    dc.replace({"SEX": {"Genderfluid Characters": "Genderless Characters",
+                        "Agender Characters": "Genderless Characters"}}, inplace=True)
+    dc.loc[dc['SEX'] == "Transgender Characters", "GSM"] = "Transgender Characters"
+    dc.loc[dc['SEX'] == "Transgender Characters", "SEX"] = np.nan
     data = pd.concat([dc, marvel])
     data['count'] = 1
     return data
@@ -205,9 +212,10 @@ def show_heatmap(data):
 
 if __name__ == '__main__':
     st.title('Characteristic in DC/Marvel')
-    dc, marvel = load_data()
+    # dc, marvel = load_data()
+    data, dc, marvel = load_data()
     show_raw_data(dc, marvel)
-    data = merge(dc, marvel)
+    # data = merge(dc, marvel)
     show_most_appear_name(data)
     show_character_distribution(data)
     show_combination(data)
