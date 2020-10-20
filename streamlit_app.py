@@ -40,10 +40,13 @@ def merge(dc, marvel):
     dc['TYPE'] = 'DC'
     marvel['TYPE'] = 'Marvel'
     marvel.replace({"SEX": {"Genderfluid Characters": "Genderless Characters",
-                            "Agender Characters": "Genderless Characters"}}, inplace=True)
+                            "Agender Characters": "Genderless Characters"}},
+                   inplace=True)
     dc.replace({"SEX": {"Genderfluid Characters": "Genderless Characters",
-                        "Agender Characters": "Genderless Characters"}}, inplace=True)
-    dc.loc[dc['SEX'] == "Transgender Characters", "GSM"] = "Transgender Characters"
+                        "Agender Characters": "Genderless Characters"}},
+               inplace=True)
+    dc.loc[dc['SEX'] == "Transgender Characters",
+           "GSM"] = "Transgender Characters"
     dc.loc[dc['SEX'] == "Transgender Characters", "SEX"] = np.nan
     data = pd.concat([dc, marvel])
     data['count'] = 1
@@ -142,6 +145,7 @@ def show_combination(data):
     st.markdown('---')
     st.text('Brief description for show_combination: TODO')
     # collect user input
+    plot2 = st.empty()
     plot = st.empty()
     col1, col2 = st.beta_columns(2)
     with col1:
@@ -171,17 +175,24 @@ def show_combination(data):
             data = data[data['ID'] == id]
         else:  # nan
             data = data[data['ID'].isnull()]
-    data = data[y + ['APPEARANCES', 'TYPE', 'name']]
-    data = data.groupby(y).agg({'APPEARANCES': 'sum'})
-    freq_dict = {
-        k if isinstance(k, str) else ', '.join(k): v
-        for k, v in zip(data.index, data['APPEARANCES'])
-    }
-    if len(freq_dict) > 0:
+    try:
+        data = data[y + ['APPEARANCES', 'TYPE', 'name']]
+        data = data.groupby(y).agg({'APPEARANCES': 'sum'})
+        freq_dict = {
+            k if isinstance(k, str) else ', '.join(k): v
+            for k, v in zip(data.index, data['APPEARANCES'])
+        }
         wc = WordCloud(background_color="white", width=MAX_WIDTH * 2)
         plot.image(wc.generate_from_frequencies(freq_dict).to_image(),
                    use_column_width=True)
-    else:
+        data, len(data)
+        data['NAME'] = list(freq_dict.keys())
+        plot2.write(alt.Chart(data).mark_bar().encode(
+            x='APPEARANCES',
+            y='NAME',
+            tooltip='NAME',
+        ).properties(width=MAX_WIDTH))
+    except Exception:
         plot.write('No such combination :(')
 
 
@@ -212,10 +223,8 @@ def show_heatmap(data):
 
 if __name__ == '__main__':
     st.title('Characteristic in DC/Marvel')
-    # dc, marvel = load_data()
     data, dc, marvel = load_data()
     show_raw_data(dc, marvel)
-    # data = merge(dc, marvel)
     show_most_appear_name(data)
     show_character_distribution(data)
     show_combination(data)
