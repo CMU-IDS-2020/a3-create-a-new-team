@@ -129,6 +129,7 @@ def show_character_distribution(data):
         data = data[data['TYPE'] == dataset[0]]
     data = data.dropna(subset=[y])
     data = filter_year(data)
+    # TODO: is there a way to zoom in one bar
     plot.write(alt.Chart(data).mark_bar().encode(
         x=alt.X(
             'count(count)',
@@ -136,7 +137,7 @@ def show_character_distribution(data):
         ),
         y=x,
         color=y,
-        tooltip=y,
+        tooltip=[y, 'count(count)'],
     ).properties(width=MAX_WIDTH))
 
 
@@ -164,7 +165,7 @@ def show_combination(data):
         data = data[data['TYPE'] == dataset[0]]
     data = filter_year(data, 'Year for combination')
     data = data.dropna(subset=y + ['APPEARANCES'])
-    data['APPEARANCES'] = np.log(data['APPEARANCES'] + 1)
+    data['POPULARITY'] = np.log(data['APPEARANCES'] + 1)
     if align != 'ALL':
         if isinstance(align, str):
             data = data[data['ALIGN'] == align]
@@ -176,27 +177,27 @@ def show_combination(data):
         else:  # nan
             data = data[data['ID'].isnull()]
     try:
-        data = data[y + ['APPEARANCES', 'TYPE', 'name']]
-        data = data.groupby(y).agg({'APPEARANCES': 'sum'})
+        data = data[y + ['POPULARITY', 'TYPE', 'name']]
+        data = data.groupby(y).agg({'POPULARITY': 'sum'})
         freq_dict = {
             k if isinstance(k, str) else ', '.join(k): v
-            for k, v in zip(data.index, data['APPEARANCES'])
+            for k, v in zip(data.index, data['POPULARITY'])
         }
         wc = WordCloud(background_color="white", width=MAX_WIDTH * 2)
         plot.image(wc.generate_from_frequencies(freq_dict).to_image(),
                    use_column_width=True)
-        data['NAME'] = list(freq_dict.keys())
+        data['FEATURE'] = list(freq_dict.keys())
+
         plot2.write(alt.Chart(data).mark_bar().encode(
-            x='APPEARANCES',
-            y='NAME',
-            tooltip='NAME',
+            x='POPULARITY',
+            y=alt.Y('FEATURE',sort = '-x'),
+            tooltip=['FEATURE', 'POPULARITY'],
         ).properties(width=MAX_WIDTH))
     except Exception:
         plot.write('No such combination :(')
 
 
 def show_heatmap(data):
-    # https: // stackoverflow.com / questions / 48035381 / correlation - among - multiple - categorical - variables - pandas
     st.markdown('---')
     st.text('Brief description: TODO')
     plot = st.empty()
@@ -211,32 +212,34 @@ def show_heatmap(data):
     data = filter_year(data, "Year range for heatmap")
 
     # treat NaNs in `GSM` as the majority group
-    data.replace({"GSM": {np.nan: "N/A",}}, inplace=True)
+    data.replace({"GSM": {np.nan: "N/A"}}, inplace=True)
     data = data.apply(lambda x: pd.factorize(x)[0]) + 1
-    for target_feature in y:
-        result = data.dropna(subset=[target_feature] + x)[[target_feature] + x]
+    result = data.dropna(subset=y + x)[y + x]
+    st.write(f"length of data: {len(result)}")
         # st.write(np.isfinite(result).all())
         # result = pd.DataFrame(
         #     [chisquare(result[b].values, f_exp=result.values.T, axis=1)[0]
         #      for b in result],
         #     columns=result.keys(),
         #     index=result.keys())
-        factors_paired = [(i, j) for i in result.columns.values for j in result.columns.values]
+    # https: // stackoverflow.com / questions / 48035381 / correlation - among - multiple - categorical - variables - pandas
+    # TODO chi2 is symmetric and is not a suitable metric
+    factors_paired = [(i, j) for i in result.columns.values for j in result.columns.values]
 
-        chi2, p_values = [], []
+    chi2, p_values = [], []
 
-        for f in factors_paired:
-            if f[0] != f[1]:
-                chitest = chi2_contingency(pd.crosstab(result[f[0]], result[f[1]]))
-                chi2.append(chitest[0])
-                p_values.append(chitest[1])
-            else:  # for same factor pair
-                chi2.append(0)
-                p_values.append(0)
+    for f in factors_paired:
+        if f[0] != f[1]:
+            chitest = chi2_contingency(pd.crosstab(result[f[0]], result[f[1]]))
+            chi2.append(chitest[0])
+            p_values.append(chitest[1])
+        else:  # for same factor pair
+            chi2.append(0)
+            p_values.append(0)
 
-        chi2 = np.array(chi2).reshape((len(x) + 1, len(x) + 1))  # shape it as a matrix
-        chi2 = pd.DataFrame(chi2, index=result.columns.values, columns=result.columns.values)  # then a df for convenience
-        st.write(chi2)
+    chi2 = np.array(chi2).reshape((len(x) + len(y), len(x) + len(y)))  # shape it as a matrix
+    chi2 = pd.DataFrame(chi2, index=result.columns.values, columns=result.columns.values)  # then a df for convenience
+    st.write(chi2)
         # st.write(result, "why is it still NaN???")
 
 
