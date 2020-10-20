@@ -236,7 +236,7 @@ def show_heatmap(data):
 
         chi2 = np.array(chi2).reshape((len(x) + 1, len(x) + 1))  # shape it as a matrix
         chi2 = pd.DataFrame(chi2, index=result.columns.values, columns=result.columns.values)  # then a df for convenience
-        # st.write(chi2, "why is it still NaN???")
+        st.write(chi2)
         # st.write(result, "why is it still NaN???")
 
 
