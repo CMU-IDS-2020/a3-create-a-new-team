@@ -94,7 +94,7 @@ def show_info():
         - `FIRST APPEARANCE`: The month and year of the character's first appearance in a comic book, if available
         - `YEAR`: The year of the character's first appearance in a comic book, if available
     '''.splitlines()
-    if st.checkbox('Show fields description'):
+    if st.checkbox('Show dataset fields description'):
         for d in desc:
             st.write(d)
 
@@ -118,13 +118,13 @@ def show_most_appear_name(data):
             "Appearance threshold", 0, int(data['APPEARANCES'].max()) // 2, 50)
     with col2:
         dataset = st.multiselect(
-            "Dataset for most appear", ["DC", "Marvel"], ["DC"])
+            "Dataset for most popular", ["DC", "Marvel"], ["DC"])
     if len(dataset) == 0:
         plot.write('At least one dataset need to be selected.')
         return
     elif len(dataset) == 1:
         data = data[data['TYPE'] == dataset[0]]
-    data = filter_year(data, "Year range for most appear")
+    data = filter_year(data, "Year range for most popular")
     data = data[data['APPEARANCES'] >= threshold]
     desc_str = []
     for key, value in choice.items():
