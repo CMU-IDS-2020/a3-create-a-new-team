@@ -319,45 +319,42 @@ def show_combination(data):
 
 def show_heatmap(data):
     st.markdown('---')
-    st.write('Brief description: TODO')
-    plot = st.empty()
-    x = ['ALIGN', 'ID']
-    y = ['EYE', 'HAIR', 'SEX', 'GSM']
-    dataset = st.multiselect("In which company   ", ["DC", "Marvel"], ["DC"])
-    if len(dataset) == 0:
-        plot.write('At least one dataset need to be selected.')
-        return
-    elif len(dataset) == 1:
-        data = data[data['TYPE'] == dataset[0]]
-    data = filter_year(data, "Year range  ")
+    st.write('## Relationship between different features')
+    st.write('What\'s the correlation between different set of features?')
+    col1, col2 = st.beta_columns(2)
+    plot = []
+    with col1:
+        plot.append(st.empty())
+        st.write('<center>DC</center>', unsafe_allow_html=True)
+    with col2:
+        plot.append(st.empty())
+        st.write('<center>Marvel</center>', unsafe_allow_html=True)
+    orig_data = filter_year(data, "Year range  ")
+    for i, dataset in enumerate(["DC", "Marvel"]):
+        x = ['ALIGN', 'ID']
+        y = ['EYE', 'HAIR', 'SEX', 'GSM']
+        data = orig_data[orig_data['TYPE'] == dataset]
 
-    # treat NaNs in `GSM` as the majority group
-    data.replace({"GSM": {np.nan: "N/A"}}, inplace=True)
-    data = data.apply(lambda x: pd.factorize(x)[0]) + 1
-    result = data.dropna(subset=y + x)[y + x]
-    st.write(f"length of data: {len(result)}")
-    # https://stackoverflow.com/questions/48035381/correlation-among-multiple-categorical-variables-pandas
-    # TODO chi2 is symmetric and is not a suitable metric
-    factors_paired = [
-        (i, j) for i in result.columns.values for j in result.columns.values]
-
-    chi2, p_values = [], []
-
-    for f in factors_paired:
-        if f[0] != f[1]:
-            chitest = chi2_contingency(pd.crosstab(result[f[0]], result[f[1]]))
-            chi2.append(chitest[0])
-            p_values.append(chitest[1])
-        else:  # for same factor pair
-            chi2.append(0)
-            p_values.append(0)
-
-    chi2 = np.array(chi2).reshape(
-        (len(x) + len(y), len(x) + len(y)))  # shape it as a matrix
-    chi2 = pd.DataFrame(chi2, index=result.columns.values,
-                        columns=result.columns.values)
-    # then a df for convenience
-    st.write(chi2)
+        # treat NaNs in `GSM` as the majority group
+        data.replace({"GSM": {np.nan: "N/A"}}, inplace=True)
+        data = data.apply(lambda x: pd.factorize(x)[0]) + 1
+        result = data.dropna(subset=y + x)[y + x].corr().loc[x, y]
+        result = result.reset_index().melt('index')
+        result.columns = ['var1', 'var2', 'correlation']
+        chart = alt.Chart(result).mark_rect().encode(
+            x=alt.X('var2', title=None),
+            y=alt.Y('var1', title=None),
+            color=alt.Color('correlation'),
+        ).properties(width=MAX_WIDTH // 2, height=150)
+        chart += chart.mark_text().encode(
+            text=alt.Text('correlation', format='.2f'),
+            color=alt.condition(
+                'datum.correlation >= 0',
+                alt.value('white'),
+                alt.value('black'),
+            )
+        )
+        plot[i].write(chart)
 
 
 if __name__ == '__main__':
