@@ -132,13 +132,13 @@ def show_most_appear_name(data):
             data = data[data[key.upper()].isnull()]
         elif value != 'ALL':
             data = data[data[key.upper()] == value]
-            desc_str.append(f'{key} = `{value}`')
+            desc_str.append(f'`{value}`')
     if desc_str:
         desc_str = ', '.join(desc_str)
         desc.write(
-            f'Who is the super star under this set of feature: {desc_str}?')
+            f'Who is the super star with {desc_str}?')
     else:
-        desc.write('Who is the super star under a set of feature?')
+        desc.write('Who is the super star?')
     freq = {k.replace(r'\"', ''): v for k, v in zip(
         data['name'], data['APPEARANCES'])}
     if len(freq) > 0:
@@ -156,16 +156,46 @@ def show_most_appear_name(data):
 def show_company(data):
     st.markdown('---')
     st.write('## Appearance vs Company')
-    st.write('Which is the most popular, DC or Marvel?')
+    st.write('Which is the most popular company, DC or Marvel?')
     data = data.dropna(subset=['APPEARANCES'])
-    st.write(alt.Chart(data).mark_line().encode(
+    nearest = alt.selection(type='single', nearest=True, on='mouseover',
+                            fields=['YEAR'], empty='none')
+    line = alt.Chart(data).mark_line().encode(
         x=alt.X('YEAR', axis=alt.Axis(title='Year')),
         y=alt.Y(
             'sum(APPEARANCES)',
             axis=alt.Axis(title='Sum of appearance of all characteristic')),
         color='TYPE',
         tooltip=['TYPE', 'YEAR', 'sum(APPEARANCES)'],
-    ).properties(width=MAX_WIDTH))
+    )
+    selectors = alt.Chart(data).mark_point().encode(
+        x='YEAR',
+        opacity=alt.value(0),
+    ).add_selection(
+        nearest
+    )
+
+    # Draw points on the line, and highlight based on selection
+    points = line.mark_point().encode(
+        opacity=alt.condition(nearest, alt.value(1), alt.value(0))
+    )
+
+    # Draw text labels near the points, and highlight based on selection
+    text = line.mark_text(align='left', dx=5, dy=-5).encode(
+        text=alt.condition(nearest, 'sum(APPEARANCES)', alt.value(' '))
+    )
+
+    # Draw a rule at the location of the selection
+    rules = alt.Chart(data).mark_rule(color='gray').encode(
+        x='YEAR',
+    ).transform_filter(
+        nearest
+    )
+
+    # Put the five layers into a chart and bind the data
+    st.write(alt.layer(
+        line, selectors, points, rules, text
+    ).properties(width=MAX_WIDTH).interactive())
 
 
 def show_character_distribution(data):
@@ -210,7 +240,6 @@ def show_character_distribution(data):
                 data = data[data['ID'].isnull()]
         desc_str += 'and '.join(desc_list)
     desc.write(desc_str + '?')
-    # TODO: is there a way to zoom in one bar
     plot.write(alt.Chart(data).mark_bar().encode(
         x=alt.X('YEAR', axis=alt.Axis(title='Year')),
         y=alt.Y(
@@ -219,7 +248,7 @@ def show_character_distribution(data):
         ),
         color=y,
         tooltip=[y, 'count(count)'],
-    ).properties(width=MAX_WIDTH, height=500))
+    ).properties(width=MAX_WIDTH, height=500).interactive())
 
 
 def show_combination(data):
@@ -245,7 +274,7 @@ def show_combination(data):
         return
     elif len(dataset) == 1:
         data = data[data['TYPE'] == dataset[0]]
-    data = filter_year(data, 'Year for combination')
+    data = filter_year(data, 'Year range for combination')
     data = data.dropna(subset=y + ['APPEARANCES'])
     data['POPULARITY'] = np.log(data['APPEARANCES'] + 1)
     y_ = [s.lower() for s in y]
@@ -283,7 +312,7 @@ def show_combination(data):
             x=alt.X('POPULARITY', axis=alt.Axis(title='Popularity')),
             y=alt.Y('FEATURE', sort='-x', axis=alt.Axis(title='Feature')),
             tooltip=['FEATURE', 'POPULARITY'],
-        ).properties(width=MAX_WIDTH))
+        ).properties(width=MAX_WIDTH).interactive())
     except Exception:
         plot.write('No such combination :(')
 
