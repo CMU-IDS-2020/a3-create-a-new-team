@@ -15,7 +15,7 @@ streamlit run streamlit_app.py
 
 ### View Online
 
-Unavailable currently :(
+https://share.streamlit.io/cmu-ids-2020/a3-create-a-new-team
 
 ### Deliverables
 
