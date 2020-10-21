@@ -67,9 +67,9 @@ def filter_year(data, key="Year range"):
 
 
 def show_most_appear_name(data):
-    """符合某一特征的角主要角色（的名字）"""
     st.markdown('---')
-    st.text('Brief description for show_most_appear_name: TODO')
+    st.write('## The most popular character')
+    desc = st.empty()
     plot = st.empty()
     col = st.beta_columns(3)
     choice = {}
@@ -93,34 +93,65 @@ def show_most_appear_name(data):
         data = data[data['TYPE'] == dataset[0]]
     data = filter_year(data, "Year range for most appear")
     data = data[data['APPEARANCES'] >= threshold]
+    desc_str = []
     for key, value in choice.items():
         if not isinstance(value, str) and np.isnan(value):
             data = data[data[key.upper()].isnull()]
         elif value != 'ALL':
             data = data[data[key.upper()] == value]
+            desc_str.append(f'{key} = `{value}`')
+    if desc_str:
+        desc_str = ', '.join(desc_str)
+        desc.write(
+            f'Who is the super star under this set of feature: {desc_str}?')
+    else:
+        desc.write('Who is the super star under a set of feature?')
     freq = {k.replace(r'\"', ''): v for k, v in zip(
         data['name'], data['APPEARANCES'])}
     if len(freq) > 0:
-        wc = WordCloud(background_color="white", width=MAX_WIDTH * 2)
+        wc = WordCloud(
+            background_color="white",
+            width=MAX_WIDTH * 2,
+            height=400,
+        )
         plot.image(wc.generate_from_frequencies(freq).to_image(),
                    use_column_width=True)
     else:
         plot.write('No such person :(')
 
 
+def show_company(data):
+    st.markdown('---')
+    st.write('## Appearance vs Company')
+    st.write('Which is the most popular, DC or Marvel?')
+    data = data.dropna(subset=['APPEARANCES'])
+    st.write(alt.Chart(data).mark_line().encode(
+        x=alt.X('YEAR', axis=alt.Axis(title='Year')),
+        y=alt.Y(
+            'sum(APPEARANCES)',
+            axis=alt.Axis(title='Sum of appearance of all characteristic')),
+        color='TYPE',
+        tooltip=['TYPE', 'YEAR', 'sum(APPEARANCES)'],
+    ).properties(width=MAX_WIDTH))
+
+
 def show_character_distribution(data):
     """不管出现次数的 角色数量关于特征的分布"""
     st.markdown('---')
-    st.text('Brief description for show_character_distribution: TODO')
+    st.write('## Feature proportion')
+    desc = st.empty()
     # collect user input
     plot = st.empty()
-    col1, col2, col3 = st.beta_columns(3)
+    col1, col2 = st.beta_columns(2)
     with col1:
-        x = st.selectbox("Base feature", ('ALIGN', 'ID'))
+        align = st.selectbox(
+            'Which align ', ["ALL"] + list(set(data['ALIGN'])))
+        y = st.selectbox("Target feature for proportion",
+                         ('EYE', 'HAIR', 'SEX', 'GSM'))
     with col2:
-        y = st.selectbox("Target feature", ('EYE', 'HAIR', 'SEX', 'GSM'))
-    with col3:
-        dataset = st.multiselect("Dataset", ["DC", "Marvel"], ["DC"])
+        id = st.selectbox('Which ID ', ['ALL'] + list(set(data['ID'])))
+        dataset = st.multiselect("Dataset for proportion",
+                                 ["DC", "Marvel"], ["DC"])
     # process data
     if len(dataset) == 0:
         plot.write('At least one dataset need to be selected.')
@@ -128,33 +159,51 @@ def show_character_distribution(data):
     elif len(dataset) == 1:
         data = data[data['TYPE'] == dataset[0]]
     data = data.dropna(subset=[y])
-    data = filter_year(data)
+    desc_str = f'What\'s the proportion of {y.lower()}'
+    if align != 'ALL' or id != 'ALL':
+        desc_str += ' with '
+        desc_list = []
+        if align != 'ALL':
+            if isinstance(align, str):
+                desc_list.append(f'`{align}`')
+                data = data[data['ALIGN'] == align]
+            else:
+                data = data[data['ALIGN'].isnull()]
+        if id != 'ALL':
+            if isinstance(id, str):
+                desc_list.append(f'`{id}`')
+                data = data[data['ID'] == id]
+            else:
+                data = data[data['ID'].isnull()]
+        desc_str += 'and '.join(desc_list)
+    desc.write(desc_str + '?')
     # TODO: is there a way to zoom in one bar
     plot.write(alt.Chart(data).mark_bar().encode(
-        x=alt.X(
+        x=alt.X('YEAR', axis=alt.Axis(title='Year')),
+        y=alt.Y(
             'count(count)',
             axis=alt.Axis(title="Count of different " + y.lower())
         ),
-        y=x,
         color=y,
         tooltip=[y, 'count(count)'],
-    ).properties(width=MAX_WIDTH))
+    ).properties(width=MAX_WIDTH, height=500))
 
 
 def show_combination(data):
     """以出现次数作为weights 看对于每种align来说比较常见的feature组合"""
     st.markdown('---')
-    st.text('Brief description for show_combination: TODO')
+    st.write('## Most common combination of features')
+    desc = st.empty()
     # collect user input
     plot2 = st.empty()
     plot = st.empty()
     col1, col2 = st.beta_columns(2)
     with col1:
-        align = st.selectbox("Which ALIGN", ['ALL'] + list(set(data['ALIGN'])))
+        align = st.selectbox("Which align", ['ALL'] + list(set(data['ALIGN'])))
         y = st.multiselect("Target feature for combination",
                            ('EYE', 'HAIR', 'SEX', 'GSM'), ['EYE'])
     with col2:
-        id = st.selectbox("Which ID", ['ALL'] + list(set(data['ID'])))
+        id = st.selectbox("Which id", ['ALL'] + list(set(data['ID'])))
         dataset = st.multiselect("Dataset for combination",
                                  ["DC", "Marvel"], ["DC"])
     # process data
@@ -166,16 +215,25 @@ def show_combination(data):
     data = filter_year(data, 'Year for combination')
     data = data.dropna(subset=y + ['APPEARANCES'])
     data['POPULARITY'] = np.log(data['APPEARANCES'] + 1)
+    y_ = [s.lower() for s in y]
+    desc_str = f'What\'s the most common type of {"/".join(y_)}'
+    desc_list = []
     if align != 'ALL':
         if isinstance(align, str):
             data = data[data['ALIGN'] == align]
+            desc_list.append(f'`{align}`')
         else:  # nan
             data = data[data['ALIGN'].isnull()]
     if id != 'ALL':
-        if isinstance(data, str):
+        if isinstance(id, str):
             data = data[data['ID'] == id]
+            desc_list.append(f'`{id}`')
         else:  # nan
             data = data[data['ID'].isnull()]
+    if desc_list:
+        desc_str += ' with ' + ' and '.join(desc_list)
+    desc_str += '?'
+    desc.write(desc_str)
     try:
         data = data[y + ['POPULARITY', 'TYPE', 'name']]
         data = data.groupby(y).agg({'POPULARITY': 'sum'})
@@ -189,8 +247,8 @@ def show_combination(data):
         data['FEATURE'] = list(freq_dict.keys())
 
         plot2.write(alt.Chart(data).mark_bar().encode(
-            x='POPULARITY',
-            y=alt.Y('FEATURE',sort = '-x'),
+            x=alt.X('POPULARITY', axis=alt.Axis(title='Popularity')),
+            y=alt.Y('FEATURE', sort='-x', axis=alt.Axis(title='Feature')),
             tooltip=['FEATURE', 'POPULARITY'],
         ).properties(width=MAX_WIDTH))
     except Exception:
@@ -216,15 +274,10 @@ def show_heatmap(data):
     data = data.apply(lambda x: pd.factorize(x)[0]) + 1
     result = data.dropna(subset=y + x)[y + x]
     st.write(f"length of data: {len(result)}")
-        # st.write(np.isfinite(result).all())
-        # result = pd.DataFrame(
-        #     [chisquare(result[b].values, f_exp=result.values.T, axis=1)[0]
-        #      for b in result],
-        #     columns=result.keys(),
-        #     index=result.keys())
-    # https: // stackoverflow.com / questions / 48035381 / correlation - among - multiple - categorical - variables - pandas
+    # https://stackoverflow.com/questions/48035381/correlation-among-multiple-categorical-variables-pandas
     # TODO chi2 is symmetric and is not a suitable metric
-    factors_paired = [(i, j) for i in result.columns.values for j in result.columns.values]
+    factors_paired = [
+        (i, j) for i in result.columns.values for j in result.columns.values]
 
     chi2, p_values = [], []
 
@@ -237,16 +290,19 @@ def show_heatmap(data):
             chi2.append(0)
             p_values.append(0)
 
-    chi2 = np.array(chi2).reshape((len(x) + len(y), len(x) + len(y)))  # shape it as a matrix
-    chi2 = pd.DataFrame(chi2, index=result.columns.values, columns=result.columns.values)  # then a df for convenience
+    chi2 = np.array(chi2).reshape(
+        (len(x) + len(y), len(x) + len(y)))  # shape it as a matrix
+    chi2 = pd.DataFrame(chi2, index=result.columns.values,
+                        columns=result.columns.values)
+    # then a df for convenience
     st.write(chi2)
-        # st.write(result, "why is it still NaN???")
 
 
 if __name__ == '__main__':
     st.title('Characteristic in DC/Marvel')
     data, dc, marvel = load_data()
     show_raw_data(dc, marvel)
+    show_company(data)
     show_most_appear_name(data)
     show_character_distribution(data)
     show_combination(data)
