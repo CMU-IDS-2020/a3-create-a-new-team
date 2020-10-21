@@ -118,13 +118,13 @@ def show_most_appear_name(data):
             "Appearance threshold", 0, int(data['APPEARANCES'].max()) // 2, 50)
     with col2:
         dataset = st.multiselect(
-            "Dataset for most popular", ["DC", "Marvel"], ["DC"])
+            "In which company", ["DC", "Marvel"], ["DC"])
     if len(dataset) == 0:
         plot.write('At least one dataset need to be selected.')
         return
     elif len(dataset) == 1:
         data = data[data['TYPE'] == dataset[0]]
-    data = filter_year(data, "Year range for most popular")
+    data = filter_year(data, "Year range")
     data = data[data['APPEARANCES'] >= threshold]
     desc_str = []
     for key, value in choice.items():
@@ -213,7 +213,7 @@ def show_character_distribution(data):
                          ('EYE', 'HAIR', 'SEX', 'GSM'))
     with col2:
         id = st.selectbox('Which ID ', ['ALL'] + list(set(data['ID'])))
-        dataset = st.multiselect("Dataset for proportion",
+        dataset = st.multiselect("In which company ",
                                  ["DC", "Marvel"], ["DC"])
     # process data
     if len(dataset) == 0:
@@ -266,7 +266,7 @@ def show_combination(data):
                            ('EYE', 'HAIR', 'SEX', 'GSM'), ['EYE'])
     with col2:
         id = st.selectbox("Which id", ['ALL'] + list(set(data['ID'])))
-        dataset = st.multiselect("Dataset for combination",
+        dataset = st.multiselect("In which company  ",
                                  ["DC", "Marvel"], ["DC"])
     # process data
     if len(dataset) == 0:
@@ -274,7 +274,7 @@ def show_combination(data):
         return
     elif len(dataset) == 1:
         data = data[data['TYPE'] == dataset[0]]
-    data = filter_year(data, 'Year range for combination')
+    data = filter_year(data, 'Year range ')
     data = data.dropna(subset=y + ['APPEARANCES'])
     data['POPULARITY'] = np.log(data['APPEARANCES'] + 1)
     y_ = [s.lower() for s in y]
@@ -319,17 +319,17 @@ def show_combination(data):
 
 def show_heatmap(data):
     st.markdown('---')
-    st.text('Brief description: TODO')
+    st.write('Brief description: TODO')
     plot = st.empty()
     x = ['ALIGN', 'ID']
     y = ['EYE', 'HAIR', 'SEX', 'GSM']
-    dataset = st.multiselect("Dataset for heatmap", ["DC", "Marvel"], ["DC"])
+    dataset = st.multiselect("In which company   ", ["DC", "Marvel"], ["DC"])
     if len(dataset) == 0:
         plot.write('At least one dataset need to be selected.')
         return
     elif len(dataset) == 1:
         data = data[data['TYPE'] == dataset[0]]
-    data = filter_year(data, "Year range for heatmap")
+    data = filter_year(data, "Year range  ")
 
     # treat NaNs in `GSM` as the majority group
     data.replace({"GSM": {np.nan: "N/A"}}, inplace=True)
