@@ -68,9 +68,10 @@ def filter_year(data, key="Year range"):
 
 def show_info():
     st.write('# Comic Dataset Analysis')
-    st.write('''
-        Dataset credit: [Kaggle]
-        (https://www.kaggle.com/fivethirtyeight/fivethirtyeight-comic-characters-dataset)
+    st.markdown('''
+        > GitHub project page: https://github.com/CMU-IDS-2020/a3-create-a-new-team
+
+        > Dataset credit: [Kaggle](https://www.kaggle.com/fivethirtyeight/fivethirtyeight-comic-characters-dataset)
     ''')
     st.write('## Dataset Description')
     st.write('''
@@ -311,7 +312,7 @@ def show_combination(data):
 
 def show_heatmap(data):
     st.markdown('---')
-    st.write('## Relationship between different features')
+    st.write('## Relationship of features')
     st.write('What\'s the correlation between different set of features?')
     col1, col2 = st.beta_columns(2)
     plot = []
@@ -352,7 +353,8 @@ def show_heatmap(data):
 def show_prediction(data):
     st.markdown('---')
     st.write('## Let\'s make prediction')
-    st.write('Can we predict the characteristic with respect to a set of features?')
+    st.write(
+        'Can we predict the characteristic with respect to a set of features?')
     # TODO
 
 
@@ -360,12 +362,19 @@ if __name__ == '__main__':
     show_info()
     data, dc, marvel = load_data()
     show_raw_data(dc, marvel)
-    show_company(data)
-    show_most_appear_name(data)
-    show_character_distribution(data)
-    show_combination(data)
-    show_heatmap(data)
-    show_prediction(data)
+    function_mapping = {
+        'Appearance vs Company': lambda: show_company(data),
+        'The most popular character': lambda: show_most_appear_name(data),
+        'Feature proportion': lambda: show_character_distribution(data),
+        'Most common combination of features': lambda: show_combination(data),
+        'Relationship of features': lambda: show_heatmap(data),
+        'Let\'s make prediction': lambda: show_prediction(data),
+    }
+    st.sidebar.write('Choose options 👇🏻 to play with this dataset!')
+    option = st.sidebar.selectbox(
+        "Option", list(function_mapping.keys())
+    )
+    function_mapping[option]()
 
 # for reference below
 # progress_bar = st.progress(0)
