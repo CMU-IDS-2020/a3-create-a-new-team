@@ -266,15 +266,8 @@ def show_combination(data):
                            ('EYE', 'HAIR', 'SEX', 'GSM'), ['EYE'])
     with col2:
         id = st.selectbox("Which id", ['ALL'] + list(set(data['ID'])))
-        dataset = st.multiselect("In which company  ",
-                                 ["DC", "Marvel"], ["DC"])
+        data = filter_year(data, 'Year range ')
     # process data
-    if len(dataset) == 0:
-        plot.write('At least one dataset need to be selected.')
-        return
-    elif len(dataset) == 1:
-        data = data[data['TYPE'] == dataset[0]]
-    data = filter_year(data, 'Year range ')
     data = data.dropna(subset=y + ['APPEARANCES'])
     data['POPULARITY'] = np.log(data['APPEARANCES'] + 1)
     y_ = [s.lower() for s in y]
@@ -297,22 +290,21 @@ def show_combination(data):
     desc_str += '?'
     desc.write(desc_str)
     try:
-        data = data[y + ['POPULARITY', 'TYPE', 'name']]
-        data = data.groupby(y).agg({'POPULARITY': 'sum'})
+        data['FEATURE'] = data[y].apply(
+            lambda row: ', '.join(row.values), axis=1)
+        plot2.write(alt.Chart(data).mark_bar().encode(
+            x=alt.X('sum(POPULARITY)', axis=alt.Axis(title='Popularity')),
+            y=alt.Y('FEATURE', sort='-x', axis=alt.Axis(title='Feature')),
+            tooltip=['TYPE', 'FEATURE', 'sum(POPULARITY)'],
+            color='TYPE',
+        ).properties(width=MAX_WIDTH).interactive(bind_y=True))
+        data = data.groupby('FEATURE').agg({'POPULARITY': 'sum'})
         freq_dict = {
-            k if isinstance(k, str) else ', '.join(k): v
-            for k, v in zip(data.index, data['POPULARITY'])
+            k: v for k, v in zip(data.index, data['POPULARITY'])
         }
         wc = WordCloud(background_color="white", width=MAX_WIDTH * 2)
         plot.image(wc.generate_from_frequencies(freq_dict).to_image(),
                    use_column_width=True)
-        data['FEATURE'] = list(freq_dict.keys())
-
-        plot2.write(alt.Chart(data).mark_bar().encode(
-            x=alt.X('POPULARITY', axis=alt.Axis(title='Popularity')),
-            y=alt.Y('FEATURE', sort='-x', axis=alt.Axis(title='Feature')),
-            tooltip=['FEATURE', 'POPULARITY'],
-        ).properties(width=MAX_WIDTH).interactive())
     except Exception:
         plot.write('No such combination :(')
 
@@ -357,6 +349,13 @@ def show_heatmap(data):
         plot[i].write(chart)
 
 
+def show_prediction(data):
+    st.markdown('---')
+    st.write('## Let\'s make prediction')
+    st.write('Can we predict the characteristic with respect to a set of features?')
+    # TODO
+
+
 if __name__ == '__main__':
     show_info()
     data, dc, marvel = load_data()
@@ -366,6 +365,7 @@ if __name__ == '__main__':
     show_character_distribution(data)
     show_combination(data)
     show_heatmap(data)
+    show_prediction(data)
 
 # for reference below
 # progress_bar = st.progress(0)
