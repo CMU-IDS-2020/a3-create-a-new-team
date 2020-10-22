@@ -19,7 +19,21 @@ def load_data(directory="./archive"):
     # the Auburn Hair and Year issues have resolved in the csv file
     dc, marvel = pd.read_csv(path_dc), pd.read_csv(path_marvel)
     feature_importances = calc_feature_importances()
-    return merge(dc, marvel), dc, marvel, feature_importances
+    dc['TYPE'] = 'DC'
+    marvel['TYPE'] = 'Marvel'
+    marvel.replace({"SEX": {"Genderfluid Characters": "Genderless Characters",
+                            "Agender Characters": "Genderless Characters"}},
+                   inplace=True)
+    dc.replace({"SEX": {"Genderfluid Characters": "Genderless Characters",
+                        "Agender Characters": "Genderless Characters"}},
+               inplace=True)
+    dc.loc[dc['SEX'] == "Transgender Characters",
+           "GSM"] = "Transgender Characters"
+    dc.loc[dc['SEX'] == "Transgender Characters", "SEX"] = np.nan
+    data = pd.concat([dc, marvel])
+    data['count'] = 1
+    data['name'] = data['name'].apply(lambda x: x.replace(r'\"', ''))
+    return data, dc, marvel, feature_importances
 
 
 def show_info():
@@ -74,24 +88,6 @@ def show_desc(dc, marvel):
         with col2:
             option = st.selectbox("Marvel keys", sorted(marvel.keys()))
             st.write(Counter(marvel[option].tolist()))
-
-
-def merge(dc, marvel):
-    dc['TYPE'] = 'DC'
-    marvel['TYPE'] = 'Marvel'
-    marvel.replace({"SEX": {"Genderfluid Characters": "Genderless Characters",
-                            "Agender Characters": "Genderless Characters"}},
-                   inplace=True)
-    dc.replace({"SEX": {"Genderfluid Characters": "Genderless Characters",
-                        "Agender Characters": "Genderless Characters"}},
-               inplace=True)
-    dc.loc[dc['SEX'] == "Transgender Characters",
-           "GSM"] = "Transgender Characters"
-    dc.loc[dc['SEX'] == "Transgender Characters", "SEX"] = np.nan
-    data = pd.concat([dc, marvel])
-    data['count'] = 1
-    data['name'] = data['name'].apply(lambda x: x.replace(r'\"', ''))
-    return data
 
 
 def filter_year(data, key="Year range", call_fn=st.sidebar.slider):
