@@ -107,6 +107,11 @@ def filter_year(data, key="Year range", call_fn=st.sidebar.slider):
 
 def show_most_appear_name(data):
     st.write('## The most exposed characters')
+    st.markdown('''
+    We use the number of appearances as a metric for the level of popularity in a character's world.
+    
+    The number of appearances is accumulated from the year the character debuted to 2013.
+    ''')
     desc = st.empty()
     plot = st.empty()
     plot2 = st.empty()
@@ -155,7 +160,7 @@ def show_most_appear_name(data):
         data = data.sort_values(by=['APPEARANCES', 'name'], ascending=False)[:20]
         plot2.altair_chart(alt.Chart(data).mark_bar().encode(
             x=alt.X('APPEARANCES', axis=alt.Axis(title='Appearance')),
-            y=alt.Y('name', sort='-x', axis=alt.Axis(title=f'Top {len(data)} big names')),
+            y=alt.Y('name', sort='-x', axis=alt.Axis(title=f'Top {len(data)} Big Names')),
             color='WORLD',
             tooltip=['name', 'APPEARANCES'],
         ), use_container_width=True)
@@ -209,7 +214,7 @@ def show_company(data):
     st.markdown('''
     Overall, the Marvel world is more active than the DC world. And there are peaks for both worlds.
     For example, the level of activity of the Marvel world peaks at around year 1963. We could suspect that there must be influential stories or characters around that period.
-    To verify, go on to the next option and set the year range to `1963-1963` and `world` to `Marvel`.
+    To verify, go on to the next playground and set the year range to `1963-1963` and `world` to `Marvel`.
     ''')
 
 
@@ -224,7 +229,7 @@ def show_character_distribution(data):
     with col1:
         align = st.selectbox(
             'Which align ', ["ALL"] + list(set(data['ALIGN'])))
-        y = st.selectbox("Target feature",
+        y = st.selectbox("Target genetic feature",
                          ('EYE', 'HAIR', 'SEX', 'GSM'))
     with col2:
         id = st.selectbox('Which ID ', ['ALL'] + list(set(data['ID'])))
@@ -254,7 +259,7 @@ def show_character_distribution(data):
             else:
                 data = data[data['ID'].isnull()]
         desc_str += 'and '.join(desc_list)
-    desc.write(desc_str + '?\n\nYou can drag the year range in the following chart. And then there would be another bar chart the summarizes the data points in selected year range.')
+    desc.write(desc_str + '?\n\nYou can drag the year range in the upper chart. And then the lower bar chart would summarizes the data points in selected year range.')
     brush = alt.selection_interval(encodings=['x'])
     chart = alt.Chart(data).mark_bar().encode(
         x=alt.X('YEAR', axis=alt.Axis(title='Year')),
@@ -270,7 +275,7 @@ def show_character_distribution(data):
         pct='1 / datum.TotalCount').mark_bar().encode(
         x=alt.X(
             'sum(pct):Q',
-            axis=alt.Axis(format='%', title=f"Percentage of Characters with Different {y} Feature.")),
+            axis=alt.Axis(format='%', title=f"Percentage of Characters with Different {y} Feature")),
         y=y,
         tooltip=[y, alt.Tooltip('sum(pct):Q', format='.1%', title="Percentage")],
     )
@@ -278,11 +283,11 @@ def show_character_distribution(data):
     st.markdown('''
     A number of interesting observations:
     - Earlier characters with blue eyes accounts for the majority, and gradually \
-    the number of characters with brown eyes and black eyes begin to grow.
+    the numbers of characters with brown eyes and black eyes begin to grow.
     - Set `Target feature` to `SEX`, select different `ALIGN` and drag the year range window from \
     left to right. Earlier worlds are dominated by male characters and the distributions \
-    of different sex within different `ALIGN` group have
-    become more evenly throughout the years, except for the `Bad Characters`. Well, \
+    of different sex within different `ALIGN` groups have
+    become more evenly distributed throughout the years, except for the `Bad Characters`. Well, \
     at least some of us may be expecting charming bad female characters :) 
     ''')
 
@@ -327,7 +332,7 @@ def show_combination(data):
     desc_str += '\n\nIn earlier years (e.g. before 1951), blue-eyed blonde-hair male characters dominate the comic world. \
     Later (e.g. after 1972), the world favors brown-eyed black/brown hair male characters and women become more influential, \
     but the most popular female characters are still of blue eyes and blonde hair. \
-    From 2000 to 2013, the ethnicity of male and female are roughly of the same distribution with respect to popularity.'
+    From 2000 to 2013, the ethnicities of male and female are roughly of the same distribution with respect to popularity.'
     desc_str += '\n\nSexual and gender minorities other than homosexual and bisexual are not in the comic world until 1984.'
 
     desc.write(desc_str)
@@ -440,7 +445,7 @@ def show_heatmap(data):
     For intra-correlations:
     - The pair-wise correlations among {`HAIR`, `EYE`, `SEX`} are quite high. 
     - The correlation between `HAIR` and `EYE` of the Marvel world is consistently higher than then DC world over the years.
-    - `GSM` has little correlation with other genetic features except for `SEX`. This is because most characters are of sexual and gender majority.
+    - `GSM` has little correlation with other genetic features except for `SEX`. One possible reason is that most characters are of sexual and gender majority.
     
     For inter-correlations:
     - Inter-correlations are higher in the Marvel world.
@@ -453,10 +458,10 @@ def show_prediction(feature_importances):
     st.markdown('''
     Can we predict one genetic feature given the other features?
     
-    We train a decision tree classifier for each of the response variable from {`SEX`, `EYE`, `HAIR`}, and visualize the importances of the explanatory features, \
-    as an interpretation of asymmetric correlations.
+    We train a decision tree classifier for each of the response variable from {`SEX`, `EYE`, `HAIR`}, and visualize the Gini importance of the explanatory features, \
+    as an interpretation of asymmetric correlations. 
     
-    The details of feature importances are give in [the scikit-learn document](https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeClassifier.html?highlight=decision%20tree#sklearn.tree.DecisionTreeClassifier).
+    The details of Gini importance are give in [the scikit-learn document](https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeClassifier.html?highlight=decision%20tree#sklearn.tree.DecisionTreeClassifier).
     ''')
 
     # desc = st.empty()
@@ -468,13 +473,24 @@ def show_prediction(feature_importances):
     data = feature_importances[response]
     plot.altair_chart(alt.Chart(data).mark_bar().encode(
         x=alt.X('Importance',
-                axis=alt.Axis(title=f"Importances of Different Explanatory Variables in Predicting {response}.")
+                axis=alt.Axis(title=f"Importances of Different Explanatory Variables in Predicting {response}")
                 ),
         y=alt.Y('Variable', axis=alt.Axis(title='Explanatory Variables'),
                 sort='-x'),
         tooltip=['Importance'],
     ).properties(height=500).interactive(), use_container_width=True)
-
+    st.markdown('''
+    The most decisive factor in predicting genetic features are the debut year \
+    and the number of appearances (popularity) of the character. This is in line with our observations in the previous sections \
+    that the distribution of genetic features changes over time and the world favors certain ethnicities.
+    
+    Although previously we show that genetic features share correlations with each other, \
+    the other two genetic features contribute little to the prediction of a certain genetic feature. \
+    It is possible that the combination of the other two genetic features is predictive of the target response feature, \
+    but we are unable to validate this using the APIs of the decision tree model.
+    
+    Acquired identities are not predictive of the genetic features as well.
+    ''')
 
 if __name__ == '__main__':
     st.write('# Comic Dataset Analysis')
@@ -493,9 +509,9 @@ if __name__ == '__main__':
         'Relationships between features': lambda: show_heatmap(data),
         'Let\'s make predictions': lambda: show_prediction(feature_importances),
     }
-    st.sidebar.write('Choose options 👇🏻 to play with this comic dataset!')
+    st.sidebar.write('Choose playgrounds 👇🏻 to explore this comic dataset!')
     option = st.sidebar.selectbox(
-        "Option", list(function_mapping.keys())
+        "Playground", list(function_mapping.keys())
     )
     st.sidebar.markdown('---')
     st.markdown('---')
