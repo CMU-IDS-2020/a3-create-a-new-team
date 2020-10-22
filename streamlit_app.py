@@ -323,12 +323,13 @@ def show_combination(data):
         wc = WordCloud(background_color="white", width=MAX_WIDTH * 2)
         plot2.image(wc.generate_from_frequencies(freq_dict).to_image(),
                     use_column_width=True)
-        plot.altair_chart(alt.Chart(data).mark_bar().encode(
+        plot.write(alt.Chart(data).mark_bar().encode(
             x=alt.X('sum(POPULARITY)', axis=alt.Axis(title='Popularity')),
             y=alt.Y('FEATURE', sort='-x', axis=alt.Axis(title='Feature')),
             color='TYPE',
+            column='TYPE',
             tooltip=['FEATURE', 'sum(POPULARITY)', 'TYPE'],
-        ).interactive(), use_container_width=True)
+        ).properties(width=MAX_WIDTH // 3))
     except Exception:
         plot.write('No such combination :(')
 
