@@ -150,11 +150,10 @@ def show_most_appear_name(data):
         )
         plot.image(wc.generate_from_frequencies(freq).to_image(),
                    use_column_width=True)
-        plot2.altair_chart(alt.Chart(
-            data.sort_values(by=['APPEARANCES', 'name'], ascending=False)[:20]
-        ).mark_bar().encode(
+        data = data.sort_values(by=['APPEARANCES', 'name'], ascending=False)[:20]
+        plot2.altair_chart(alt.Chart(data).mark_bar().encode(
             x=alt.X('APPEARANCES', axis=alt.Axis(title='Appearance')),
-            y=alt.Y('name', sort='-x', axis=alt.Axis(title='Top 20 big name')),
+            y=alt.Y('name', sort='-x', axis=alt.Axis(title=f'Top {len(data)} big name')),
             color='TYPE',
             tooltip=['name', 'APPEARANCES'],
         ), use_container_width=True)
