@@ -314,6 +314,7 @@ def show_heatmap(data):
     st.markdown('---')
     st.write('## Relationship of features')
     st.write('What\'s the correlation between different set of features?')
+    # https://stackoverflow.com/questions/20892799/using-pandas-calculate-cram%C3%A9rs-coefficient-matrix
     col1, col2 = st.beta_columns(2)
     plot = []
     with col1:
@@ -330,9 +331,26 @@ def show_heatmap(data):
 
         # treat NaNs in `GSM` as the majority group
         data.replace({"GSM": {np.nan: "N/A"}}, inplace=True)
-        data = data.apply(lambda x: pd.factorize(x)[0]) + 1
-        result = data.dropna(subset=y + x)[y + x].corr().loc[x, y]
-        result = result.reset_index().melt('index')
+
+        keys = data.dropna(subset=y + x)[y + x].columns.values
+        factors_paired = [(i, j) for i in y+x for j in y+x]
+
+        cramer = []
+        for f in factors_paired:
+            features_in_interest = list(set(x) | set([f[0]]) | set([f[1]]))
+            result = data.dropna(subset=features_in_interest)[features_in_interest]
+            confusion_matrix = pd.crosstab(result[f[0]], result[f[1]])
+            chi2 = chi2_contingency(confusion_matrix)[0]
+            n = confusion_matrix.sum().sum()
+            phi2 = chi2 / n
+            r, k = confusion_matrix.shape
+            phi2corr = max(0, phi2 - ((k - 1) * (r - 1)) / (n - 1))
+            rcorr = r - ((r - 1) ** 2) / (n - 1)
+            kcorr = k - ((k - 1) ** 2) / (n - 1)
+            np.sqrt(phi2corr / min((kcorr - 1), (rcorr - 1)))
+            cramer.append(np.sqrt(phi2corr / min((kcorr - 1), (rcorr - 1))))
+        cramer_arr = np.array(cramer).reshape((len(x) + len(y), len(x) + len(y)))  # shape it as a matrix
+        result = pd.DataFrame(cramer_arr, index=keys, columns=keys).loc[x, y].reset_index().melt('index')
         result.columns = ['var1', 'var2', 'correlation']
         chart = alt.Chart(result).mark_rect().encode(
             x=alt.X('var2', title=None),
