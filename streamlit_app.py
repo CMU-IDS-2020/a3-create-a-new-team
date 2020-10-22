@@ -19,8 +19,8 @@ def load_data(directory="./archive"):
     # the Auburn Hair and Year issues have resolved in the csv file
     dc, marvel = pd.read_csv(path_dc), pd.read_csv(path_marvel)
     feature_importances = calc_feature_importances()
-    dc['TYPE'] = 'DC'
-    marvel['TYPE'] = 'Marvel'
+    dc['WORLD'] = 'DC'
+    marvel['WORLD'] = 'Marvel'
     marvel.replace({"SEX": {"Genderfluid Characters": "Genderless Characters",
                             "Agender Characters": "Genderless Characters"}},
                    inplace=True)
@@ -104,7 +104,7 @@ def filter_year(data, key="Year range", call_fn=st.sidebar.slider):
 
 
 def show_most_appear_name(data):
-    st.write('## The most popular character')
+    st.write('## The most exposed character')
     desc = st.empty()
     plot = st.empty()
     plot2 = st.empty()
@@ -119,7 +119,7 @@ def show_most_appear_name(data):
     col1, col2 = st.sidebar.beta_columns(2)
     with col1:
         dataset = st.multiselect(
-            "In which company", ["DC", "Marvel"], ["DC"])
+            "In which world", ["DC", "Marvel"], ["DC"])
     with col2:
         data = filter_year(data, "Year range", st.slider)
     data = data.dropna(subset=['APPEARANCES'])
@@ -127,7 +127,7 @@ def show_most_appear_name(data):
         plot.write('At least one dataset need to be selected.')
         return
     elif len(dataset) == 1:
-        data = data[data['TYPE'] == dataset[0]]
+        data = data[data['WORLD'] == dataset[0]]
     desc_str = []
     for key, value in choice.items():
         if not isinstance(value, str) and np.isnan(value):
@@ -154,7 +154,7 @@ def show_most_appear_name(data):
         plot2.altair_chart(alt.Chart(data).mark_bar().encode(
             x=alt.X('APPEARANCES', axis=alt.Axis(title='Appearance')),
             y=alt.Y('name', sort='-x', axis=alt.Axis(title=f'Top {len(data)} big name')),
-            color='TYPE',
+            color='WORLD',
             tooltip=['name', 'APPEARANCES'],
         ), use_container_width=True)
     else:
@@ -162,19 +162,19 @@ def show_most_appear_name(data):
 
 
 def show_company(data):
-    st.write('## Level of activity of companies')
-    st.write('Which is the most active company, DC or Marvel?')
-    st.write("We estimate the level of activity by the sum of appearances of all characters among that company\'s work.")
+    st.write('## Level of activity of DC/Marvel')
+    st.write('Which is the most active world, DC or Marvel?')
+    st.write("We estimate the level of activity of a world in a certain year by the sum of appearances of all that world's characters that debuted in that year.")
     data = data.dropna(subset=['APPEARANCES'])
     nearest = alt.selection(type='single', nearest=True, on='mouseover',
                             fields=['YEAR'], empty='none')
     line = alt.Chart(data).mark_line().encode(
-        x=alt.X('YEAR', axis=alt.Axis(title='Year')),
+        x=alt.X('YEAR', axis=alt.Axis(title='Debut Year')),
         y=alt.Y(
             'sum(APPEARANCES)',
-            axis=alt.Axis(title='Sum of appearance of all characteristic')),
-        color='TYPE',
-        tooltip=['TYPE', 'YEAR', 'sum(APPEARANCES)'],
+            axis=alt.Axis(title='Sum of Appearances of All Characters')),
+        color='WORLD',
+        tooltip=['WORLD', 'YEAR', 'sum(APPEARANCES)'],
     )
     selectors = alt.Chart(data).mark_point().encode(
         x='YEAR',
@@ -204,6 +204,11 @@ def show_company(data):
     st.altair_chart(alt.layer(
         line, selectors, points, rules, text
     ).interactive(), use_container_width=True)
+    st.markdown('''
+    Overall, the Marvel world is more active than the DC world. And there are peaks for both worlds.
+    For example, the level of activity of the Marvel world peaks at around year 1963. We could suspect that there must be influential stories or characters around that period.
+    To verify, go on to the next option and set the year range to `1963-1963` and `world` to `Marvel`.
+    ''')
 
 
 def show_character_distribution(data):
@@ -220,14 +225,14 @@ def show_character_distribution(data):
                          ('EYE', 'HAIR', 'SEX', 'GSM'))
     with col2:
         id = st.selectbox('Which ID ', ['ALL'] + list(set(data['ID'])))
-        dataset = st.multiselect("In which company ",
+        dataset = st.multiselect("In which world ",
                                  ["DC", "Marvel"], ["DC"])
     # process data
     if len(dataset) == 0:
         plot.write('At least one dataset need to be selected.')
         return
     elif len(dataset) == 1:
-        data = data[data['TYPE'] == dataset[0]]
+        data = data[data['WORLD'] == dataset[0]]
     data = data.dropna(subset=[y])
     desc_str = f'What\'s the distribution of {y.lower()}'
     if align != 'ALL' or id != 'ALL':
@@ -318,9 +323,9 @@ def show_combination(data):
         plot.write(alt.Chart(data).mark_bar().encode(
             x=alt.X('sum(POPULARITY)', axis=alt.Axis(title='Popularity')),
             y=alt.Y('FEATURE', sort='-x', axis=alt.Axis(title='Feature')),
-            color='TYPE',
-            column='TYPE',
-            tooltip=['FEATURE', 'sum(POPULARITY)', 'TYPE'],
+            color='WORLD',
+            column='WORLD',
+            tooltip=['FEATURE', 'sum(POPULARITY)', 'WORLD'],
         ).properties(width=MAX_WIDTH // 3))
     except Exception:
         plot.write('No such combination :(')
@@ -342,7 +347,7 @@ def show_heatmap(data):
     for i, dataset in enumerate(["DC", "Marvel"]):
         x = ['ALIGN', 'ID']
         y = ['EYE', 'HAIR', 'SEX', 'GSM']
-        data = orig_data[orig_data['TYPE'] == dataset]
+        data = orig_data[orig_data['WORLD'] == dataset]
 
         # treat NaNs in `GSM` as the majority group
         data.replace({"GSM": {np.nan: "N/A"}}, inplace=True)
@@ -435,8 +440,8 @@ if __name__ == '__main__':
     data, dc, marvel, feature_importances = load_data()
     function_mapping = {
         'Project description': lambda: show_desc(dc, marvel),
-        'Level of activity of companies': lambda: show_company(data),
-        'The most popular character': lambda: show_most_appear_name(data),
+        'Level of activity of DC/Marval': lambda: show_company(data),
+        'The most exposed character': lambda: show_most_appear_name(data),
         'Distribution of genetic features': lambda: show_character_distribution(data),
         'Stereotypes': lambda: show_combination(data),
         'Relationships between features': lambda: show_heatmap(data),
