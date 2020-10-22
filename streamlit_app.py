@@ -35,7 +35,6 @@ def show_info():
     - Visualize the distribution of different features of the characters in the products of the two company, DC and Marvel.
     - Analyze the correlations among genetic features.
     - Analyze the correlations between genetic features of the characters and their identity status and alignment.
-    
     ''')
     desc = '''
         #### Fields
@@ -91,6 +90,7 @@ def merge(dc, marvel):
     dc.loc[dc['SEX'] == "Transgender Characters", "SEX"] = np.nan
     data = pd.concat([dc, marvel])
     data['count'] = 1
+    data['name'] = data['name'].apply(lambda x: x.replace(r'\"', ''))
     return data
 
 
@@ -126,6 +126,7 @@ def show_most_appear_name(data):
             "In which company", ["DC", "Marvel"], ["DC"])
     with col2:
         data = filter_year(data, "Year range", st.slider)
+    data = data.dropna(subset=['APPEARANCES'])
     if len(dataset) == 0:
         plot.write('At least one dataset need to be selected.')
         return
@@ -144,8 +145,7 @@ def show_most_appear_name(data):
             f'Who is the super star with {desc_str}?')
     else:
         desc.write('Who is the super star?')
-    freq = {k.replace(r'\"', ''): v for k, v in zip(
-        data['name'], data['APPEARANCES'])}
+    freq = {k: v for k, v in zip(data['name'], data['APPEARANCES'])}
     if len(freq) > 0:
         wc = WordCloud(
             background_color="white",
