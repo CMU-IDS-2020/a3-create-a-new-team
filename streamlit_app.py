@@ -20,7 +20,36 @@ def load_data(directory="./archive"):
     return merge(dc, marvel), dc, marvel
 
 
+def show_info():
+    st.write('## Dataset Description')
+    st.write('''
+        This dataset comes from [Marvel Wikia]
+        (http://marvel.wikia.com/Main_Page) and [DC Wikia]
+        (http://dc.wikia.com/wiki/Main_Page). It has over 22,000 comic
+        characters.
+    ''')
+    desc = '''
+        - `page_id`: The unique identifier for that characters page within the wikia
+        - `name`: The name of the character
+        - `urlslug`: The unique url within the wikia that takes you to the character
+        - `ID`: The identity status of the character (Secret Identity, Public identity, [on marvel only: No Dual Identity])
+        - `ALIGN`: If the character is Good, Bad or Neutral
+        - `EYE`: Eye color of the character
+        - `HAIR`: Hair color of the character
+        - `SEX`: Sex of the character (e.g. Male, Female, etc.)
+        - `GSM`: If the character is a gender or sexual minority (e.g. Homosexual characters, bisexual characters)
+        - `ALIVE`: If the character is alive or deceased
+        - `APPEARANCES`: The number of appareances of the character in comic books (as of Sep. 2, 2014. Number will become increasingly out of date as time goes on.)
+        - `FIRST APPEARANCE`: The month and year of the character's first appearance in a comic book, if available
+        - `YEAR`: The year of the character's first appearance in a comic book, if available
+    '''.splitlines()
+    if st.checkbox('Show dataset fields description'):
+        for d in desc:
+            st.write(d)
+
+
 def show_raw_data(dc, marvel):
+    show_info()
     if st.checkbox("Show raw data"):
         col1, col2 = st.beta_columns([2, 1])
         with col1:
@@ -53,9 +82,9 @@ def merge(dc, marvel):
     return data
 
 
-def filter_year(data, key="Year range"):
+def filter_year(data, key="Year range", call_fn=st.sidebar.slider):
     min_year, max_year = int(data['YEAR'].min()), int(data['YEAR'].max())
-    year = st.slider(
+    year = call_fn(
         key,
         min_value=min_year,
         max_value=max_year,
@@ -66,54 +95,19 @@ def filter_year(data, key="Year range"):
     return data
 
 
-def show_info():
-    st.write('# Comic Dataset Analysis')
-    st.markdown('''
-        > GitHub project page: https://github.com/CMU-IDS-2020/a3-create-a-new-team
-
-        > Dataset credit: [Kaggle](https://www.kaggle.com/fivethirtyeight/fivethirtyeight-comic-characters-dataset)
-    ''')
-    st.write('## Dataset Description')
-    st.write('''
-        This dataset comes from [Marvel Wikia]
-        (http://marvel.wikia.com/Main_Page) and [DC Wikia]
-        (http://dc.wikia.com/wiki/Main_Page). It has over 22,000 comic
-        characters.
-    ''')
-    desc = '''
-        - `page_id`: The unique identifier for that characters page within the wikia
-        - `name`: The name of the character
-        - `urlslug`: The unique url within the wikia that takes you to the character
-        - `ID`: The identity status of the character (Secret Identity, Public identity, [on marvel only: No Dual Identity])
-        - `ALIGN`: If the character is Good, Bad or Neutral
-        - `EYE`: Eye color of the character
-        - `HAIR`: Hair color of the character
-        - `SEX`: Sex of the character (e.g. Male, Female, etc.)
-        - `GSM`: If the character is a gender or sexual minority (e.g. Homosexual characters, bisexual characters)
-        - `ALIVE`: If the character is alive or deceased
-        - `APPEARANCES`: The number of appareances of the character in comic books (as of Sep. 2, 2014. Number will become increasingly out of date as time goes on.)
-        - `FIRST APPEARANCE`: The month and year of the character's first appearance in a comic book, if available
-        - `YEAR`: The year of the character's first appearance in a comic book, if available
-    '''.splitlines()
-    if st.checkbox('Show dataset fields description'):
-        for d in desc:
-            st.write(d)
-
-
 def show_most_appear_name(data):
-    st.markdown('---')
     st.write('## The most popular character')
     desc = st.empty()
     plot = st.empty()
-    col = st.beta_columns(3)
+    col = st.sidebar.beta_columns(2)
     choice = {}
-    layout_id = [0, 0, 1, 1, 2, 2]
+    layout_id = [0, 1, 0, 1, 0, 1]
     layout_index = ['Align', 'ID', 'Eye', 'Hair', 'Sex', 'GSM']
     for col_id, index in zip(layout_id, layout_index):
         with col[col_id]:
             choice[index] = st.selectbox(
                 index, ["ALL"] + list(set(data[index.upper()])))
-    col1, col2 = st.beta_columns(2)
+    col1, col2 = st.sidebar.beta_columns(2)
     with col1:
         threshold = st.slider(
             "Appearance threshold", 0, int(data['APPEARANCES'].max()) // 2, 50)
@@ -155,7 +149,6 @@ def show_most_appear_name(data):
 
 
 def show_company(data):
-    st.markdown('---')
     st.write('## Appearance vs Company')
     st.write('Which is the most popular company, DC or Marvel?')
     data = data.dropna(subset=['APPEARANCES'])
@@ -201,16 +194,15 @@ def show_company(data):
 
 def show_character_distribution(data):
     """不管出现次数的 角色数量关于特征的分布"""
-    st.markdown('---')
     st.write('## Feature proportion')
     desc = st.empty()
     # collect user input
     plot = st.empty()
-    col1, col2 = st.beta_columns(2)
+    col1, col2 = st.sidebar.beta_columns(2)
     with col1:
         align = st.selectbox(
             'Which align ', ["ALL"] + list(set(data['ALIGN'])))
-        y = st.selectbox("Target feature for proportion",
+        y = st.selectbox("Target feature",
                          ('EYE', 'HAIR', 'SEX', 'GSM'))
     with col2:
         id = st.selectbox('Which ID ', ['ALL'] + list(set(data['ID'])))
@@ -254,20 +246,19 @@ def show_character_distribution(data):
 
 def show_combination(data):
     """以出现次数作为weights 看对于每种align来说比较常见的feature组合"""
-    st.markdown('---')
     st.write('## Most common combination of features')
     desc = st.empty()
     # collect user input
     plot2 = st.empty()
     plot = st.empty()
-    col1, col2 = st.beta_columns(2)
+    col1, col2 = st.sidebar.beta_columns(2)
     with col1:
         align = st.selectbox("Which align", ['ALL'] + list(set(data['ALIGN'])))
-        y = st.multiselect("Target feature for combination",
-                           ('EYE', 'HAIR', 'SEX', 'GSM'), ['EYE'])
     with col2:
         id = st.selectbox("Which id", ['ALL'] + list(set(data['ID'])))
-        data = filter_year(data, 'Year range ')
+    y = st.sidebar.multiselect("Target feature",
+                               ('EYE', 'HAIR', 'SEX', 'GSM'), ['EYE'])
+    data = filter_year(data, 'Year range')
     # process data
     data = data.dropna(subset=y + ['APPEARANCES'])
     data['POPULARITY'] = np.log(data['APPEARANCES'] + 1)
@@ -311,7 +302,6 @@ def show_combination(data):
 
 
 def show_heatmap(data):
-    st.markdown('---')
     st.write('## Relationship of features')
     st.write('What\'s the correlation between different set of features?')
     # https://stackoverflow.com/questions/20892799/using-pandas-calculate-cram%C3%A9rs-coefficient-matrix
@@ -389,7 +379,6 @@ def show_heatmap(data):
 
 
 def show_prediction(data):
-    st.markdown('---')
     st.write('## Let\'s make prediction')
     st.write(
         'Can we predict the characteristic with respect to a set of features?')
@@ -397,10 +386,15 @@ def show_prediction(data):
 
 
 if __name__ == '__main__':
-    show_info()
+    st.write('# Comic Dataset Analysis')
+    st.markdown('''
+        > GitHub project page: https://github.com/CMU-IDS-2020/a3-create-a-new-team
+
+        > Dataset credit: [Kaggle](https://www.kaggle.com/fivethirtyeight/fivethirtyeight-comic-characters-dataset)
+    ''')
     data, dc, marvel = load_data()
-    show_raw_data(dc, marvel)
     function_mapping = {
+        'Dataset description': lambda: show_raw_data(dc, marvel),
         'Appearance vs Company': lambda: show_company(data),
         'The most popular character': lambda: show_most_appear_name(data),
         'Feature proportion': lambda: show_character_distribution(data),
@@ -408,10 +402,12 @@ if __name__ == '__main__':
         'Relationship of features': lambda: show_heatmap(data),
         'Let\'s make prediction': lambda: show_prediction(data),
     }
-    st.sidebar.write('Choose options 👇🏻 to play with this dataset!')
+    st.sidebar.write('Choose options 👇🏻 to play with this comic dataset!')
     option = st.sidebar.selectbox(
         "Option", list(function_mapping.keys())
     )
+    st.sidebar.markdown('---')
+    st.markdown('---')
     function_mapping[option]()
 
 # for reference below
