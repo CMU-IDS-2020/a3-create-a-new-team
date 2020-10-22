@@ -1,6 +1,6 @@
 # Comic Character Analysis
 
-![Project layout.](./screenshots/overview.png)
+![Project layout](./screenshots/overview.png)
 The [Comic-Characters dataset](https://www.kaggle.com/fivethirtyeight/fivethirtyeight-comic-characters-dataset) records the characters in DC and Marvel world, coupled with their features, including genetic features (e.g. hair color, eye color, sex), identities, alignments (good characters, bad characters, or neutral characters), the number of appearances, the debut month, etc.. 
 
 We group `EYE`, `HAIR`, `SEX`, `GSM` as genetic features for the sake of convenience, though we are aware that it is controversial whether sexual orientation is genetic. We believe these genetic features are good indicators of one's inborn cultural identities.
@@ -91,12 +91,12 @@ Genetic features represent inborn cultural identity of a character. We aim to in
 
 #### Demo
 
-<center>Eye Distribution of The DC World </center>
+Eye Distribution of the DC World
 ![Eye Distribution of The DC World](./screenshots/dc_eye_distribution.gif)
 
 
 
-<center>Eye Distribution of The Marvel World </center>
+Eye Distribution of the Marvel World
 ![Eye Distribution of The Marvel World](./screenshots/marvel_eye_distribution.gif)
 
 
