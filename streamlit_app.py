@@ -23,7 +23,7 @@ def load_data(directory="./archive"):
 
 
 def show_info():
-    st.write('## Dataset Description')
+    st.write('## Dataset description')
     st.write('''
         This dataset comes from [Marvel Wikia]
         (http://marvel.wikia.com/Main_Page) and [DC Wikia]
@@ -441,7 +441,7 @@ if __name__ == '__main__':
     ''')
     data, dc, marvel, feature_importances = load_data()
     function_mapping = {
-        'Project Description': lambda: show_desc(dc, marvel),
+        'Project description': lambda: show_desc(dc, marvel),
         'Level of activity of companies': lambda: show_company(data),
         'The most popular character': lambda: show_most_appear_name(data),
         'Distribution of genetic features': lambda: show_character_distribution(data),

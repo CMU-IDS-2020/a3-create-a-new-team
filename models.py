@@ -10,6 +10,9 @@ import os
 categoricals = ["TYPE", "SEX", "GSM", "HAIR", "EYE", "ALIGN", "ID"]
 numericals = ["APPEARANCES", "YEAR"]
 
+X_col = ["TYPE", "GSM", "SEX", "HAIR", "APPEARANCES", "YEAR", "ALIGN", "ID"]    
+y_col = ["EYE"]
+
 
 def set_seed(seed):
     np.random.seed(seed)
