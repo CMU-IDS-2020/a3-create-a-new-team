@@ -2,5 +2,6 @@ altair
 numpy
 pandas
 scipy
+scikit-learn
 streamlit
 wordcloud
