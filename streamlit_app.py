@@ -122,18 +122,15 @@ def show_most_appear_name(data):
                 index, ["ALL"] + list(set(data[index.upper()])))
     col1, col2 = st.sidebar.beta_columns(2)
     with col1:
-        threshold = st.slider(
-            "Appearance threshold", 0, int(data['APPEARANCES'].max()) // 2, 50)
-    with col2:
         dataset = st.multiselect(
             "In which company", ["DC", "Marvel"], ["DC"])
+    with col2:
+        data = filter_year(data, "Year range", st.slider)
     if len(dataset) == 0:
         plot.write('At least one dataset need to be selected.')
         return
     elif len(dataset) == 1:
         data = data[data['TYPE'] == dataset[0]]
-    data = filter_year(data, "Year range")
-    data = data[data['APPEARANCES'] >= threshold]
     desc_str = []
     for key, value in choice.items():
         if not isinstance(value, str) and np.isnan(value):
@@ -162,7 +159,8 @@ def show_most_appear_name(data):
         ).mark_bar().encode(
             x=alt.X('APPEARANCES', axis=alt.Axis(title='Appearance')),
             y=alt.Y('name', sort='-x', axis=alt.Axis(title='Top 20 big name')),
-            tooltip=['name', 'APPEARANCES']
+            color='TYPE',
+            tooltip=['name', 'APPEARANCES'],
         ), use_container_width=True)
     else:
         plot.write('No such person :(')
@@ -253,7 +251,7 @@ def show_character_distribution(data):
             else:
                 data = data[data['ID'].isnull()]
         desc_str += 'and '.join(desc_list)
-    desc.write(desc_str + '?')
+    desc.write(desc_str + '?\n\nYou can select the year range in the first chart.')
     brush = alt.selection_interval(encodings=['x'])
     chart = alt.Chart(data).mark_bar().encode(
         x=alt.X('YEAR', axis=alt.Axis(title='Year')),
