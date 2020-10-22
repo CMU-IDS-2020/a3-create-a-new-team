@@ -151,8 +151,9 @@ def show_most_appear_name(data):
 
 
 def show_company(data):
-    st.write('## Appearance vs Company')
-    st.write('Which is the most popular company, DC or Marvel?')
+    st.write('## Level of Activity of Companies')
+    st.write('Which is the most active company, DC or Marvel?')
+    st.write("We estimate the level of activity by the sum of appearances of all characters among that company\'s work.")
     data = data.dropna(subset=['APPEARANCES'])
     nearest = alt.selection(type='single', nearest=True, on='mouseover',
                             fields=['YEAR'], empty='none')
@@ -196,7 +197,7 @@ def show_company(data):
 
 def show_character_distribution(data):
     """不管出现次数的 角色数量关于特征的分布"""
-    st.write('## Feature proportion')
+    st.write('## Distribution of genetic features')
     desc = st.empty()
     # collect user input
     plot = st.empty()
@@ -217,7 +218,7 @@ def show_character_distribution(data):
     elif len(dataset) == 1:
         data = data[data['TYPE'] == dataset[0]]
     data = data.dropna(subset=[y])
-    desc_str = f'What\'s the proportion of {y.lower()}'
+    desc_str = f'What\'s the distribution of {y.lower()}'
     if align != 'ALL' or id != 'ALL':
         desc_str += ' with '
         desc_list = []
@@ -240,7 +241,7 @@ def show_character_distribution(data):
         x=alt.X('YEAR', axis=alt.Axis(title='Year')),
         y=alt.Y(
             'count(count)',
-            axis=alt.Axis(title="Count of different " + y.lower())
+            axis=alt.Axis(title=f"Count of characters with different {y.lower()} feature.")
         ),
         color=y,
         tooltip=[y, 'count(count)'],
@@ -248,7 +249,7 @@ def show_character_distribution(data):
     bar = alt.Chart(data).mark_bar().encode(
         x=alt.X(
             'count(count)',
-            axis=alt.Axis(title="Count of different " + y.lower())
+            axis=alt.Axis(title=f"Count of characters with different {y.lower()} feature.")
         ),
         y=y,
     ).transform_filter(brush)
@@ -257,7 +258,7 @@ def show_character_distribution(data):
 
 def show_combination(data):
     """以出现次数作为weights 看对于每种align来说比较常见的feature组合"""
-    st.write('## Most common combination of features')
+    st.write('## Stereotypes')
     desc = st.empty()
     # collect user input
     plot2 = st.empty()
@@ -274,7 +275,7 @@ def show_combination(data):
     data = data.dropna(subset=y + ['APPEARANCES'])
     data['POPULARITY'] = np.log(data['APPEARANCES'] + 1)
     y_ = [s.lower() for s in y]
-    desc_str = f'What\'s the most common type of {"/".join(y_)}'
+    desc_str = f'What\'s the most common type of {", ".join(y_)}'
     desc_list = []
     if align != 'ALL':
         if isinstance(align, str):
@@ -291,6 +292,7 @@ def show_combination(data):
     if desc_list:
         desc_str += ' with ' + ' and '.join(desc_list)
     desc_str += '?'
+    desc_str += '\n\nWe estimate the popularity of a feature combination with a function of both the number of characters that match the combination and their number of appearances.'
     desc.write(desc_str)
     try:
         data['FEATURE'] = data[y].apply(
@@ -355,8 +357,7 @@ def show_heatmap(data):
             (len(x) + len(y), len(x) + len(y)))  # shape it as a matrix
         intra_corr = pd.DataFrame(cramer_arr, index=keys, columns=keys).loc[
             y, y].copy().reset_index().melt('index')
-        inter_corr = pd.DataFrame(cramer_arr, index=keys, columns=keys)[
-            x].copy().reset_index().melt('index')
+        inter_corr = pd.DataFrame(cramer_arr, index=keys, columns=keys).loc[y, x].copy().reset_index().melt('index')
         intra_corr.columns = ['var1', 'var2', 'correlation']
         inter_corr.columns = ['var1', 'var2', 'correlation']
         chart_intra = alt.Chart(intra_corr).mark_rect().encode(
@@ -391,9 +392,9 @@ def show_heatmap(data):
 
 
 def show_prediction(feature_importances):
-    st.write('## Let\'s make prediction')
+    st.write('## Let\'s make predictions')
     st.write(
-        'Can we predict the characteristic with respect to a set of features?')
+        'Can we predict one genetic feature given the other features?')
     # desc = st.empty()
     # collect user input
     plot = st.empty()
@@ -423,12 +424,12 @@ if __name__ == '__main__':
     data, dc, marvel, feature_importances = load_data()
     function_mapping = {
         'Dataset description': lambda: show_raw_data(dc, marvel),
-        'Appearance vs Company': lambda: show_company(data),
+        'Level of Activity of Companies': lambda: show_company(data),
         'The most popular character': lambda: show_most_appear_name(data),
-        'Feature proportion': lambda: show_character_distribution(data),
-        'Most common combination of features': lambda: show_combination(data),
-        'Relationship of features': lambda: show_heatmap(data),
-        'Let\'s make prediction': lambda: show_prediction(feature_importances),
+        'Distribution of genetic features': lambda: show_character_distribution(data),
+        'Stereotypes': lambda: show_combination(data),
+        'Relationships between features': lambda: show_heatmap(data),
+        'Let\'s make predictions': lambda: show_prediction(feature_importances),
     }
     st.sidebar.write('Choose options 👇🏻 to play with this comic dataset!')
     option = st.sidebar.selectbox(
