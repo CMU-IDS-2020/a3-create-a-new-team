@@ -101,6 +101,7 @@ def show_most_appear_name(data):
     st.write('## The most popular character')
     desc = st.empty()
     plot = st.empty()
+    plot2 = st.empty()
     col = st.sidebar.beta_columns(2)
     choice = {}
     layout_id = [0, 1, 0, 1, 0, 1]
@@ -146,12 +147,19 @@ def show_most_appear_name(data):
         )
         plot.image(wc.generate_from_frequencies(freq).to_image(),
                    use_column_width=True)
+        plot2.altair_chart(alt.Chart(
+            data.sort_values(by=['APPEARANCES', 'name'], ascending=False)[:20]
+        ).mark_bar().encode(
+            x=alt.X('APPEARANCES', axis=alt.Axis(title='Appearance')),
+            y=alt.Y('name', sort='-x', axis=alt.Axis(title='Top 20 big name')),
+            tooltip=['name', 'APPEARANCES']
+        ), use_container_width=True)
     else:
         plot.write('No such person :(')
 
 
 def show_company(data):
-    st.write('## Level of Activity of Companies')
+    st.write('## Level of activity of companies')
     st.write('Which is the most active company, DC or Marvel?')
     st.write("We estimate the level of activity by the sum of appearances of all characters among that company\'s work.")
     data = data.dropna(subset=['APPEARANCES'])
@@ -252,6 +260,7 @@ def show_character_distribution(data):
             axis=alt.Axis(title=f"Count of characters with different {y.lower()} feature.")
         ),
         y=y,
+        tooltip=[y, 'count(count)'],
     ).transform_filter(brush)
     plot.altair_chart(chart & bar, use_container_width=True)
 
@@ -308,7 +317,7 @@ def show_combination(data):
             x=alt.X('sum(POPULARITY)', axis=alt.Axis(title='Popularity')),
             y=alt.Y('FEATURE', sort='-x', axis=alt.Axis(title='Feature')),
             color='TYPE',
-            tooltip=['TYPE', 'FEATURE', 'sum(POPULARITY)'],
+            tooltip=['FEATURE', 'sum(POPULARITY)', 'TYPE'],
         ).interactive(), use_container_width=True)
     except Exception:
         plot.write('No such combination :(')
@@ -423,7 +432,7 @@ if __name__ == '__main__':
     data, dc, marvel, feature_importances = load_data()
     function_mapping = {
         'Dataset description': lambda: show_raw_data(dc, marvel),
-        'Level of Activity of Companies': lambda: show_company(data),
+        'Level of activity of companies': lambda: show_company(data),
         'The most popular character': lambda: show_most_appear_name(data),
         'Distribution of genetic features': lambda: show_character_distribution(data),
         'Stereotypes': lambda: show_combination(data),
