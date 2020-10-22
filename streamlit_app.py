@@ -7,7 +7,6 @@ import os
 import pandas as pd
 import streamlit as st
 
-
 MAX_WIDTH = 700
 
 
@@ -187,9 +186,9 @@ def show_company(data):
     )
 
     # Put the five layers into a chart and bind the data
-    st.write(alt.layer(
+    st.altair_chart(alt.layer(
         line, selectors, points, rules, text
-    ).properties(width=MAX_WIDTH).interactive())
+    ).interactive(), use_container_width=True)
 
 
 def show_character_distribution(data):
@@ -233,7 +232,8 @@ def show_character_distribution(data):
                 data = data[data['ID'].isnull()]
         desc_str += 'and '.join(desc_list)
     desc.write(desc_str + '?')
-    plot.write(alt.Chart(data).mark_bar().encode(
+    brush = alt.selection_interval(encodings=['x'])
+    chart = alt.Chart(data).mark_bar().encode(
         x=alt.X('YEAR', axis=alt.Axis(title='Year')),
         y=alt.Y(
             'count(count)',
@@ -241,7 +241,15 @@ def show_character_distribution(data):
         ),
         color=y,
         tooltip=[y, 'count(count)'],
-    ).properties(width=MAX_WIDTH, height=500).interactive())
+    ).add_selection(brush)
+    bar = alt.Chart(data).mark_bar().encode(
+        x=alt.X(
+            'count(count)',
+            axis=alt.Axis(title="Count of different " + y.lower())
+        ),
+        y=y,
+    ).transform_filter(brush)
+    plot.altair_chart(chart & bar, use_container_width=True)
 
 
 def show_combination(data):
@@ -284,19 +292,19 @@ def show_combination(data):
     try:
         data['FEATURE'] = data[y].apply(
             lambda row: ', '.join(row.values), axis=1)
-        plot2.write(alt.Chart(data).mark_bar().encode(
-            x=alt.X('sum(POPULARITY)', axis=alt.Axis(title='Popularity')),
-            y=alt.Y('FEATURE', sort='-x', axis=alt.Axis(title='Feature')),
-            tooltip=['TYPE', 'FEATURE', 'sum(POPULARITY)'],
-            color='TYPE',
-        ).properties(width=MAX_WIDTH).interactive())
-        data = data.groupby('FEATURE').agg({'POPULARITY': 'sum'})
+        d = data.groupby('FEATURE').agg({'POPULARITY': 'sum'})
         freq_dict = {
-            k: v for k, v in zip(data.index, data['POPULARITY'])
+            k: v for k, v in zip(d.index, d['POPULARITY'])
         }
         wc = WordCloud(background_color="white", width=MAX_WIDTH * 2)
-        plot.image(wc.generate_from_frequencies(freq_dict).to_image(),
-                   use_column_width=True)
+        plot2.image(wc.generate_from_frequencies(freq_dict).to_image(),
+                    use_column_width=True)
+        plot.altair_chart(alt.Chart(data).mark_bar().encode(
+            x=alt.X('sum(POPULARITY)', axis=alt.Axis(title='Popularity')),
+            y=alt.Y('FEATURE', sort='-x', axis=alt.Axis(title='Feature')),
+            color='TYPE',
+            tooltip=['TYPE', 'FEATURE', 'sum(POPULARITY)'],
+        ).interactive(), use_container_width=True)
     except Exception:
         plot.write('No such combination :(')
 
@@ -375,7 +383,8 @@ def show_heatmap(data):
                 alt.value('black'),
             )
         )
-        plot[i].write(chart_intra & chart_inter)
+        plot[i].altair_chart(chart_intra & chart_inter,
+                             use_container_width=True)
 
 
 def show_prediction(data):
