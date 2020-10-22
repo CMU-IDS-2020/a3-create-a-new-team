@@ -91,9 +91,12 @@ Genetic features represent inborn cultural identity of a character. We aim to in
 
 #### Demo
 
-![Eye Distribution of The DC World](./screenshots/dc_eye_distribution.gif)
+!![Eye Distribution of The DC World](./screenshots/dc_eye_distribution.gif)
+<center>Eye Distribution of The DC World </center>
+
 
 ![Eye Distribution of The Marvel World](./screenshots/marvel_eye_distribution.gif)
+<center>Eye Distribution of The Marvel World </center>
 
 ### Playground D: Stereotypes
 ##### Motivation
