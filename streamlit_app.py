@@ -30,7 +30,15 @@ def show_info():
         (http://dc.wikia.com/wiki/Main_Page). It has over 22,000 comic
         characters.
     ''')
+    st.markdown('''
+    ## Goal
+    - Visualize the distribution of different features of the characters in the products of the two company, DC and Marvel.
+    - Analyze the correlations among genetic features.
+    - Analyze the correlations between genetic features of the characters and their identity status and alignment.
+    
+    ''')
     desc = '''
+        #### Fields
         - `page_id`: The unique identifier for that characters page within the wikia
         - `name`: The name of the character
         - `urlslug`: The unique url within the wikia that takes you to the character
@@ -39,18 +47,20 @@ def show_info():
         - `EYE`: Eye color of the character
         - `HAIR`: Hair color of the character
         - `SEX`: Sex of the character (e.g. Male, Female, etc.)
-        - `GSM`: If the character is a gender or sexual minority (e.g. Homosexual characters, bisexual characters)
+        - `GSM`: If the character is a gender or sexual minority (e.g. homosexual characters, bisexual characters)
         - `ALIVE`: If the character is alive or deceased
         - `APPEARANCES`: The number of appareances of the character in comic books (as of Sep. 2, 2014. Number will become increasingly out of date as time goes on.)
         - `FIRST APPEARANCE`: The month and year of the character's first appearance in a comic book, if available
         - `YEAR`: The year of the character's first appearance in a comic book, if available
+        #### Definitions
+        - We group `EYE`, `HAIR`, `SEX`, `GSM` as genetic features for the sake of convenience, though we are aware that it is controversial whether sexual orientation is genetic.
     '''.splitlines()
     if st.checkbox('Show dataset fields description'):
         for d in desc:
             st.write(d)
 
 
-def show_raw_data(dc, marvel):
+def show_desc(dc, marvel):
     show_info()
     if st.checkbox("Show raw data"):
         col1, col2 = st.beta_columns([2, 1])
@@ -423,7 +433,7 @@ if __name__ == '__main__':
     ''')
     data, dc, marvel, feature_importances = load_data()
     function_mapping = {
-        'Dataset description': lambda: show_raw_data(dc, marvel),
+        'Project Description': lambda: show_desc(dc, marvel),
         'Level of Activity of Companies': lambda: show_company(data),
         'The most popular character': lambda: show_most_appear_name(data),
         'Distribution of genetic features': lambda: show_character_distribution(data),
