@@ -257,14 +257,13 @@ def show_character_distribution(data):
         color=y,
         tooltip=[y, 'count(count)'],
     ).add_selection(brush)
-    bar = alt.Chart(data).mark_bar().encode(
+    bar = alt.Chart(data).transform_filter(brush).transform_joinaggregate(TotalCount='count(*)', ).transform_calculate(pct='1 / datum.TotalCount').mark_bar().encode(
         x=alt.X(
-            'count(count)',
-            axis=alt.Axis(title=f"Count of characters with different {y.lower()} feature.")
-        ),
+            'sum(pct):Q',
+            axis=alt.Axis(format='%', title=f"Percentage of characters with different {y.lower()} feature.")),
         y=y,
-        tooltip=[y, 'count(count)'],
-    ).transform_filter(brush)
+        tooltip=[y, alt.Tooltip('sum(pct):Q', format='.1%', title="Percentage")],
+    )
     plot.altair_chart(chart & bar, use_container_width=True)
 
 
