@@ -350,14 +350,17 @@ def show_heatmap(data):
             np.sqrt(phi2corr / min((kcorr - 1), (rcorr - 1)))
             cramer.append(np.sqrt(phi2corr / min((kcorr - 1), (rcorr - 1))))
         cramer_arr = np.array(cramer).reshape((len(x) + len(y), len(x) + len(y)))  # shape it as a matrix
-        result = pd.DataFrame(cramer_arr, index=keys, columns=keys).loc[x, y].reset_index().melt('index')
-        result.columns = ['var1', 'var2', 'correlation']
-        chart = alt.Chart(result).mark_rect().encode(
+        st.write(cramer_arr)
+        intra_corr = pd.DataFrame(cramer_arr, index=keys, columns=keys).loc[y, y].copy().reset_index().melt('index')
+        inter_corr = pd.DataFrame(cramer_arr, index=keys, columns=keys)[x].copy().reset_index().melt('index')
+        intra_corr.columns = ['var1', 'var2', 'correlation']
+        inter_corr.columns = ['var1', 'var2', 'correlation']
+        chart_intra = alt.Chart(intra_corr).mark_rect().encode(
             x=alt.X('var2', title=None),
             y=alt.Y('var1', title=None),
             color=alt.Color('correlation'),
         ).properties(width=MAX_WIDTH // 2, height=150)
-        chart += chart.mark_text().encode(
+        chart_intra += chart_intra.mark_text().encode(
             text=alt.Text('correlation', format='.2f'),
             color=alt.condition(
                 'datum.correlation >= 0',
@@ -365,7 +368,21 @@ def show_heatmap(data):
                 alt.value('black'),
             )
         )
-        plot[i].write(chart)
+
+        chart_inter = alt.Chart(inter_corr).mark_rect().encode(
+            x=alt.X('var2', title=None),
+            y=alt.Y('var1', title=None),
+            color=alt.Color('correlation'),
+        ).properties(width=MAX_WIDTH // 2, height=150)
+        chart_inter += chart_inter.mark_text().encode(
+            text=alt.Text('correlation', format='.2f'),
+            color=alt.condition(
+                'datum.correlation >= 0',
+                alt.value('white'),
+                alt.value('black'),
+            )
+        )
+        plot[i].write(chart_intra & chart_inter)
 
 
 def show_prediction(data):
