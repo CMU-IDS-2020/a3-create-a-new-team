@@ -10,19 +10,6 @@ import os
 categoricals = ["TYPE", "SEX", "GSM", "HAIR", "EYE", "ALIGN", "ID"]
 numericals = ["APPEARANCES", "YEAR"]
 
-# X_col = ["TYPE", "GSM", "EYE", "HAIR", "APPEARANCES", "YEAR", "ALIGN", "ID"]
-# y_col = ["SEX"]
-
-
-# X_col = ["TYPE", "GSM",  "SEX", "EYE", "APPEARANCES", "YEAR", "ALIGN", "ID"]
-# y_col = ["HAIR"]
-
-# X_col = ["TYPE", "GSM",  "SEX", "HAIR", "APPEARANCES", "YEAR", "ALIGN", "ID"]
-# y_col = ["EYE"]
-
-X_col = ["TYPE", "GSM", "SEX", "HAIR", "APPEARANCES", "YEAR", "ALIGN", "ID"]
-y_col = ["EYE"]
-
 
 def set_seed(seed):
     np.random.seed(seed)
@@ -60,6 +47,7 @@ def merge(dc, marvel):
     data = data.dropna()
     return data
 
+
 def per_response_var(response_var, data, seed):
     set_seed(seed)
     all_col = ["TYPE", "GSM", "SEX", "EYE", "HAIR", "APPEARANCES", "YEAR", "ALIGN", "ID"]
@@ -87,6 +75,7 @@ def per_response_var(response_var, data, seed):
     # print(feature_importances)
     return feature_importances
 
+
 def calc_feature_importances():
     seed = 0
     data = load_data()
@@ -99,7 +88,6 @@ def calc_feature_importances():
     for target in ["SEX", "EYE", "HAIR"]:
         res[target] = per_response_var(target, data, seed)
     return res
-
 
 
 if __name__ == "__main__":
