@@ -492,6 +492,7 @@ def show_prediction(feature_importances):
     Acquired identities are not predictive of the genetic features as well.
     ''')
 
+
 if __name__ == '__main__':
     st.write('# Comic Dataset Analysis')
     st.markdown('''
