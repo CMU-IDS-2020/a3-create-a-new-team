@@ -60,7 +60,8 @@ def per_response_var(response_var, data, seed):
     data = data.copy()
     X = data[X_col]
     y = data[y_col]
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=seed)
+    # X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=seed)
+    X_train, y_train = X, y
     # print(len(X_train), len(X_test))
     to_transform = list(set(numericals).intersection(set(y_col + X_col)))
     if len(to_transform) > 0:
@@ -69,7 +70,7 @@ def per_response_var(response_var, data, seed):
         scaler = sc.fit(features.values)
         features = scaler.transform(features.values)
         X_train.loc[:, to_transform] = features
-        X_test.loc[:, to_transform] = sc.transform(X_test[to_transform])
+        # X_test.loc[:, to_transform] = sc.transform(X_test[to_transform])
     # print(X_train[:5])
     clf = DecisionTreeClassifier(random_state=seed)
     clf.fit(X_train, y_train)

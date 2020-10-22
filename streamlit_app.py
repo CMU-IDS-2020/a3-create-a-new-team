@@ -45,10 +45,14 @@ def show_info():
         characters.
     ''')
     st.markdown('''
-    ## Goal
-    - Visualize the distribution of different features of the characters in the products of the two company, DC and Marvel.
+    ## Definitions
+    - We group `EYE`, `HAIR`, `SEX`, `GSM` (refer to data field descriptions) as genetic features for the sake of convenience, though we are aware that it is controversial whether sexual orientation is genetic.\
+    We believe these genetic features are good indicators of one's inborn cultural identities.
+    - We group `ID` and `ALIGN` as acquired identities.
+    ## Goals
+    - Visualize the distribution of different features of the characters in two comic worlds, DC and Marvel.
     - Analyze the correlations among genetic features.
-    - Analyze the correlations between genetic features of the characters and their identity status and alignment.
+    - Analyze the correlations between genetic features of the characters and their acquired identities (identity status and alignment).
     ''')
     desc = '''
         #### Fields
@@ -65,17 +69,15 @@ def show_info():
         - `APPEARANCES`: The number of appareances of the character in comic books (as of Sep. 2, 2014. Number will become increasingly out of date as time goes on.)
         - `FIRST APPEARANCE`: The month and year of the character's first appearance in a comic book, if available
         - `YEAR`: The year of the character's first appearance in a comic book, if available
-        #### Definitions
-        - We group `EYE`, `HAIR`, `SEX`, `GSM` as genetic features for the sake of convenience, though we are aware that it is controversial whether sexual orientation is genetic.
     '''.splitlines()
-    if st.checkbox('Show dataset fields description'):
+    if st.checkbox('Show dataset field descriptions.'):
         for d in desc:
             st.write(d)
 
 
 def show_desc(dc, marvel):
     show_info()
-    if st.checkbox("Show raw data"):
+    if st.checkbox("Show raw data."):
         col1, col2 = st.beta_columns([2, 1])
         with col1:
             st.write("DC", dc)
@@ -214,6 +216,7 @@ def show_company(data):
 def show_character_distribution(data):
     """不管出现次数的 角色数量关于特征的分布"""
     st.write('## Distribution of genetic features')
+    st.write('Genetic features represent inborn cultural identity of a character. Characters are overall more diverse over the years.')
     desc = st.empty()
     # collect user input
     plot = st.empty()
@@ -251,25 +254,37 @@ def show_character_distribution(data):
             else:
                 data = data[data['ID'].isnull()]
         desc_str += 'and '.join(desc_list)
-    desc.write(desc_str + '?\n\nYou can select the year range in the first chart.')
+    desc.write(desc_str + '?\n\nYou can drag the year range in the following chart. And then there would be another bar chart the summarizes the data points in selected year range.')
     brush = alt.selection_interval(encodings=['x'])
     chart = alt.Chart(data).mark_bar().encode(
         x=alt.X('YEAR', axis=alt.Axis(title='Year')),
         y=alt.Y(
             'count(count)',
-            axis=alt.Axis(title=f"Count of characters with different {y.lower()} feature.")
+            axis=alt.Axis(title=f"Count of Characters with Different {y} Feature")
         ),
         color=y,
         tooltip=[y, 'count(count)'],
     ).add_selection(brush)
-    bar = alt.Chart(data).transform_filter(brush).transform_joinaggregate(TotalCount='count(*)', ).transform_calculate(pct='1 / datum.TotalCount').mark_bar().encode(
+    bar = alt.Chart(data).transform_filter(brush).transform_joinaggregate(
+        TotalCount='count(*)', ).transform_calculate(
+        pct='1 / datum.TotalCount').mark_bar().encode(
         x=alt.X(
             'sum(pct):Q',
-            axis=alt.Axis(format='%', title=f"Percentage of characters with different {y.lower()} feature.")),
+            axis=alt.Axis(format='%', title=f"Percentage of Characters with Different {y} Feature.")),
         y=y,
         tooltip=[y, alt.Tooltip('sum(pct):Q', format='.1%', title="Percentage")],
     )
     plot.altair_chart(chart & bar, use_container_width=True)
+    st.markdown('''
+    A number of interesting observations:
+    - Earlier characters with blue eyes accounts for the majority, and gradually \
+    the number of characters with brown eyes and black eyes begin to grow.
+    - Set `Target feature` to `SEX`, select different `ALIGN` and drag the year range window from \
+    left to right. Earlier worlds are dominated by male characters and the distributions \
+    of different sex within different `ALIGN` group have
+    become more evenly throughout the years, except for the `Bad Characters`. Well, \
+    at least some of us may be expecting charming bad female characters :) 
+    ''')
 
 
 def show_combination(data):
@@ -309,6 +324,12 @@ def show_combination(data):
         desc_str += ' with ' + ' and '.join(desc_list)
     desc_str += '?'
     desc_str += '\n\nWe estimate the popularity of a feature combination with a function of both the number of characters that match the combination and their number of appearances.'
+    desc_str += '\n\nIn earlier years (e.g. before 1951), blue-eyed blonde-hair male characters dominate the comic world. \
+    Later (e.g. after 1972), the world favors brown-eyed black/brown hair male characters and women become more influential, \
+    but the most popular female characters are still of blue eyes and blonde hair. \
+    From 2000 to 2013, the ethnicity of male and female are roughly of the same distribution with respect to popularity.'
+    desc_str += '\n\nSexual and gender minorities other than homosexual and bisexual are not in the comic world until 1984.'
+
     desc.write(desc_str)
     try:
         data['FEATURE'] = data[y].apply(
@@ -332,8 +353,16 @@ def show_combination(data):
 
 
 def show_heatmap(data):
-    st.write('## Relationship of features')
-    st.write('What\'s the correlation between different set of features?')
+    st.write('## Relationships of features')
+    st.markdown('''
+    What\'s the correlation between different features?'
+    
+    The correlation is calculated by corrected Cramer\'s V, and it is a symmetric metric.
+    
+    - The upper panel demonstrates intra-correlations (correlations between genetic features), \
+    and the lower panel demonstrates inter-correlations (correlation between a genetic feature and an acquired identity,`ID` (or `ALIGN`)).
+    - The left panel demonstrates the DC world, and the right panel demonstrates the Marvel world.
+    ''')
     # https://stackoverflow.com/questions/20892799/using-pandas-calculate-cram%C3%A9rs-coefficient-matrix
     col1, col2 = st.beta_columns(2)
     plot = []
@@ -407,12 +436,29 @@ def show_heatmap(data):
         )
         plot[i].altair_chart(chart_intra & chart_inter,
                              use_container_width=True)
+    st.markdown('''
+    For intra-correlations:
+    - The pair-wise correlations among {`HAIR`, `EYE`, `SEX`} are quite high. 
+    - The correlation between `HAIR` and `EYE` of the Marvel world is consistently higher than then DC world over the years.
+    - `GSM` has little correlation with other genetic features except for `SEX`. This is because most characters are of sexual and gender majority.
+    
+    For inter-correlations:
+    - Inter-correlations are higher in the Marvel world.
+    - There is no strong inter-correlation between a single genetic feature and a single acquired identity (`ALIGN`, or `ID`).
+    ''')
 
 
 def show_prediction(feature_importances):
     st.write('## Let\'s make predictions')
-    st.write(
-        'Can we predict one genetic feature given the other features?')
+    st.markdown('''
+    Can we predict one genetic feature given the other features?
+    
+    We train a decision tree classifier for each of the response variable from {`SEX`, `EYE`, `HAIR`}, and visualize the importances of the explanatory features, \
+    as an interpretation of asymmetric correlations.
+    
+    The details of feature importances are give in [the scikit-learn document](https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeClassifier.html?highlight=decision%20tree#sklearn.tree.DecisionTreeClassifier).
+    ''')
+
     # desc = st.empty()
     # collect user input
     plot = st.empty()
@@ -422,7 +468,7 @@ def show_prediction(feature_importances):
     data = feature_importances[response]
     plot.altair_chart(alt.Chart(data).mark_bar().encode(
         x=alt.X('Importance',
-                axis=alt.Axis(title=f"Importances of different explanatory variables in predicting {response}.")
+                axis=alt.Axis(title=f"Importances of Different Explanatory Variables in Predicting {response}.")
                 ),
         y=alt.Y('Variable', axis=alt.Axis(title='Explanatory Variables'),
                 sort='-x'),
