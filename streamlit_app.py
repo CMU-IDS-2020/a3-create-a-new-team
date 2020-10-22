@@ -7,6 +7,8 @@ import os
 import pandas as pd
 import streamlit as st
 
+from models import calc_feature_importances
+
 MAX_WIDTH = 700
 
 
@@ -16,7 +18,8 @@ def load_data(directory="./archive"):
     path_marvel = os.path.join(directory, 'marvel-wikia-data.csv')
     # the Auburn Hair and Year issues have resolved in the csv file
     dc, marvel = pd.read_csv(path_dc), pd.read_csv(path_marvel)
-    return merge(dc, marvel), dc, marvel
+    feature_importances = calc_feature_importances()
+    return merge(dc, marvel), dc, marvel, feature_importances
 
 
 def show_info():
@@ -387,11 +390,27 @@ def show_heatmap(data):
                              use_container_width=True)
 
 
-def show_prediction(data):
+def show_prediction(feature_importances):
     st.write('## Let\'s make prediction')
     st.write(
         'Can we predict the characteristic with respect to a set of features?')
-    # TODO
+    # desc = st.empty()
+    # collect user input
+    plot = st.empty()
+    response = st.sidebar.selectbox('Which response variable', list(feature_importances.keys()))
+
+    data = feature_importances[response]
+    # desc_str = f'What\'s the proportion of {y.lower()}'
+    #
+    # desc.write(desc_str + '?')
+    plot.write(alt.Chart(data).mark_bar().encode(
+        x=alt.X('Importance',
+                axis=alt.Axis(title=f"Importances of different explanatory variables in predicting {response}.")
+                ),
+        y=alt.Y('Variable', axis=alt.Axis(title='Explanatory Variables'),
+                sort='-x'),
+        tooltip=['Importance'],
+    ).properties(width=MAX_WIDTH, height=500).interactive())
 
 
 if __name__ == '__main__':
@@ -401,7 +420,7 @@ if __name__ == '__main__':
 
         > Dataset credit: [Kaggle](https://www.kaggle.com/fivethirtyeight/fivethirtyeight-comic-characters-dataset)
     ''')
-    data, dc, marvel = load_data()
+    data, dc, marvel, feature_importances = load_data()
     function_mapping = {
         'Dataset description': lambda: show_raw_data(dc, marvel),
         'Appearance vs Company': lambda: show_company(data),
@@ -409,7 +428,7 @@ if __name__ == '__main__':
         'Feature proportion': lambda: show_character_distribution(data),
         'Most common combination of features': lambda: show_combination(data),
         'Relationship of features': lambda: show_heatmap(data),
-        'Let\'s make prediction': lambda: show_prediction(data),
+        'Let\'s make prediction': lambda: show_prediction(feature_importances),
     }
     st.sidebar.write('Choose options 👇🏻 to play with this comic dataset!')
     option = st.sidebar.selectbox(

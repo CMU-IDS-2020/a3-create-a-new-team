@@ -60,20 +60,17 @@ def merge(dc, marvel):
     data = data.dropna()
     return data
 
-
-def main():
-    seed = 0
+def per_response_var(response_var, data, seed):
     set_seed(seed)
-    data = load_data()
-    print(len(data))
-    data = data.apply(lambda x: encode_categorical(x) if x.name in categoricals else x)
-
-    if "APPEARANCES" in data.columns:
-        data.loc[:, "APPEARANCES"] = np.log(data["APPEARANCES"] + 1)
+    all_col = ["TYPE", "GSM", "SEX", "EYE", "HAIR", "APPEARANCES", "YEAR", "ALIGN", "ID"]
+    y_col = [response_var]
+    all_col.remove(response_var)
+    X_col = all_col
+    data = data.copy()
     X = data[X_col]
     y = data[y_col]
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=seed)
-    print(len(X_train), len(X_test))
+    # print(len(X_train), len(X_test))
     to_transform = list(set(numericals).intersection(set(y_col + X_col)))
     if len(to_transform) > 0:
         sc = StandardScaler()
@@ -82,15 +79,28 @@ def main():
         features = scaler.transform(features.values)
         X_train.loc[:, to_transform] = features
         X_test.loc[:, to_transform] = sc.transform(X_test[to_transform])
-    print(X_train[:5])
+    # print(X_train[:5])
     clf = DecisionTreeClassifier(random_state=seed)
     clf.fit(X_train, y_train)
-    print(f"X: {X_col}")
-    print(f"y: {y_col}")
-    print(f"ACC: {clf.score(X_test, y_test)}")
-    print(f"feature importance: {clf.feature_importances_}")
-    print(f"majority voting ACC: {(y_test == y_train.value_counts().idxmax()[0]).mean()}")
+    d = {"Importance": clf.feature_importances_, "Variable": X_col}
+    feature_importances = pd.DataFrame(data=d)
+    # print(feature_importances)
+    return feature_importances
+
+def calc_feature_importances():
+    seed = 0
+    data = load_data()
+    data = data.apply(lambda x: encode_categorical(x) if x.name in categoricals else x)
+    res = {}
+
+    if "APPEARANCES" in data.columns:
+        data.loc[:, "APPEARANCES"] = np.log(data["APPEARANCES"] + 1)
+
+    for target in ["SEX", "EYE", "HAIR"]:
+        res[target] = per_response_var(target, data, seed)
+    return res
+
 
 
 if __name__ == "__main__":
-    main()
+    calc_feature_importances()
