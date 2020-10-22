@@ -1,6 +1,6 @@
 # Comic Character Analysis
 
-![Project layout](./screenshots/overview.png)
+![Project layout.](./screenshots/overview.png)
 The [Comic-Characters dataset](https://www.kaggle.com/fivethirtyeight/fivethirtyeight-comic-characters-dataset) records the characters in DC and Marvel world, coupled with their features, including genetic features (e.g. hair color, eye color, sex), identities, alignments (good characters, bad characters, or neutral characters), the number of appearances, the debut month, etc.. 
 
 We group `EYE`, `HAIR`, `SEX`, `GSM` as genetic features for the sake of convenience, though we are aware that it is controversial whether sexual orientation is genetic. We believe these genetic features are good indicators of one's inborn cultural identities.
@@ -92,16 +92,14 @@ Genetic features represent inborn cultural identity of a character. We aim to in
 #### Demo
 
 Eye Distribution of the DC World
-![Eye Distribution of The DC World](./screenshots/dc_eye_distribution.gif)
-
+![Eye Distribution of the DC World](./screenshots/dc_eye_distribution.gif)
 
 
 Eye Distribution of the Marvel World
-![Eye Distribution of The Marvel World](./screenshots/marvel_eye_distribution.gif)
-
+![Eye Distribution of the Marvel World](./screenshots/marvel_eye_distribution.gif)
 
 ### Playground D: Stereotypes
-##### Motivation
+#### Motivation
 As mentioned, the combination of genetic features might be a better indication of inborn cultural identities than a single genetic feature. For example, {blond hair, blue eye} and {brown hair, brown eye} are respectively the characteristics of two ethnicities.
 
 Here we would like to visualize the stereotypes of comic world characters. And unlike in the previous section, we take into account the number of appearances of each character. 
