@@ -104,7 +104,7 @@ def filter_year(data, key="Year range", call_fn=st.sidebar.slider):
 
 
 def show_most_appear_name(data):
-    st.write('## The most exposed character')
+    st.write('## The most exposed characters')
     desc = st.empty()
     plot = st.empty()
     plot2 = st.empty()
@@ -119,7 +119,7 @@ def show_most_appear_name(data):
     col1, col2 = st.sidebar.beta_columns(2)
     with col1:
         dataset = st.multiselect(
-            "In which world", ["DC", "Marvel"], ["DC"])
+            "In which world", ["DC", "Marvel"], ["DC", "Marvel"])
     with col2:
         data = filter_year(data, "Year range", st.slider)
     data = data.dropna(subset=['APPEARANCES'])
@@ -153,7 +153,7 @@ def show_most_appear_name(data):
         data = data.sort_values(by=['APPEARANCES', 'name'], ascending=False)[:20]
         plot2.altair_chart(alt.Chart(data).mark_bar().encode(
             x=alt.X('APPEARANCES', axis=alt.Axis(title='Appearance')),
-            y=alt.Y('name', sort='-x', axis=alt.Axis(title=f'Top {len(data)} big name')),
+            y=alt.Y('name', sort='-x', axis=alt.Axis(title=f'Top {len(data)} big names')),
             color='WORLD',
             tooltip=['name', 'APPEARANCES'],
         ), use_container_width=True)
@@ -441,7 +441,7 @@ if __name__ == '__main__':
     function_mapping = {
         'Project description': lambda: show_desc(dc, marvel),
         'Level of activity of DC/Marval': lambda: show_company(data),
-        'The most exposed character': lambda: show_most_appear_name(data),
+        'The most exposed characters': lambda: show_most_appear_name(data),
         'Distribution of genetic features': lambda: show_character_distribution(data),
         'Stereotypes': lambda: show_combination(data),
         'Relationships between features': lambda: show_heatmap(data),
