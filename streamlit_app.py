@@ -298,7 +298,7 @@ def show_combination(data):
             y=alt.Y('FEATURE', sort='-x', axis=alt.Axis(title='Feature')),
             tooltip=['TYPE', 'FEATURE', 'sum(POPULARITY)'],
             color='TYPE',
-        ).properties(width=MAX_WIDTH).interactive(bind_y=True))
+        ).properties(width=MAX_WIDTH).interactive())
         data = data.groupby('FEATURE').agg({'POPULARITY': 'sum'})
         freq_dict = {
             k: v for k, v in zip(data.index, data['POPULARITY'])
@@ -333,12 +333,13 @@ def show_heatmap(data):
         data.replace({"GSM": {np.nan: "N/A"}}, inplace=True)
 
         keys = data.dropna(subset=y + x)[y + x].columns.values
-        factors_paired = [(i, j) for i in y+x for j in y+x]
+        factors_paired = [(i, j) for i in y + x for j in y + x]
 
         cramer = []
         for f in factors_paired:
             features_in_interest = list(set(x) | set([f[0]]) | set([f[1]]))
-            result = data.dropna(subset=features_in_interest)[features_in_interest]
+            result = data.dropna(subset=features_in_interest)[
+                features_in_interest]
             confusion_matrix = pd.crosstab(result[f[0]], result[f[1]])
             chi2 = chi2_contingency(confusion_matrix)[0]
             n = confusion_matrix.sum().sum()
@@ -349,21 +350,23 @@ def show_heatmap(data):
             kcorr = k - ((k - 1) ** 2) / (n - 1)
             np.sqrt(phi2corr / min((kcorr - 1), (rcorr - 1)))
             cramer.append(np.sqrt(phi2corr / min((kcorr - 1), (rcorr - 1))))
-        cramer_arr = np.array(cramer).reshape((len(x) + len(y), len(x) + len(y)))  # shape it as a matrix
-        st.write(cramer_arr)
-        intra_corr = pd.DataFrame(cramer_arr, index=keys, columns=keys).loc[y, y].copy().reset_index().melt('index')
-        inter_corr = pd.DataFrame(cramer_arr, index=keys, columns=keys)[x].copy().reset_index().melt('index')
+        cramer_arr = np.array(cramer).reshape(
+            (len(x) + len(y), len(x) + len(y)))  # shape it as a matrix
+        intra_corr = pd.DataFrame(cramer_arr, index=keys, columns=keys).loc[
+            y, y].copy().reset_index().melt('index')
+        inter_corr = pd.DataFrame(cramer_arr, index=keys, columns=keys)[
+            x].copy().reset_index().melt('index')
         intra_corr.columns = ['var1', 'var2', 'correlation']
         inter_corr.columns = ['var1', 'var2', 'correlation']
         chart_intra = alt.Chart(intra_corr).mark_rect().encode(
             x=alt.X('var2', title=None),
             y=alt.Y('var1', title=None),
             color=alt.Color('correlation'),
-        ).properties(width=MAX_WIDTH // 2, height=150)
+        ).properties(width=MAX_WIDTH // 3, height=150)
         chart_intra += chart_intra.mark_text().encode(
             text=alt.Text('correlation', format='.2f'),
             color=alt.condition(
-                'datum.correlation >= 0',
+                'datum.correlation >= 0.5',
                 alt.value('white'),
                 alt.value('black'),
             )
@@ -373,11 +376,11 @@ def show_heatmap(data):
             x=alt.X('var2', title=None),
             y=alt.Y('var1', title=None),
             color=alt.Color('correlation'),
-        ).properties(width=MAX_WIDTH // 2, height=150)
+        ).properties(width=MAX_WIDTH // 3, height=150)
         chart_inter += chart_inter.mark_text().encode(
             text=alt.Text('correlation', format='.2f'),
             color=alt.condition(
-                'datum.correlation >= 0',
+                'datum.correlation >= 0.5',
                 alt.value('white'),
                 alt.value('black'),
             )
