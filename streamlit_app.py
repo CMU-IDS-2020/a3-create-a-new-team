@@ -109,7 +109,7 @@ def show_most_appear_name(data):
     st.write('## The most exposed characters')
     st.markdown('''
     We use the number of appearances as a metric for the level of popularity in a character's world.
-    
+
     The number of appearances is accumulated from the year the character debuted to 2013.
     ''')
     desc = st.empty()
@@ -157,7 +157,8 @@ def show_most_appear_name(data):
         )
         plot.image(wc.generate_from_frequencies(freq).to_image(),
                    use_column_width=True)
-        data = data.sort_values(by=['APPEARANCES', 'name'], ascending=False)[:20]
+        data = data.sort_values(
+            by=['APPEARANCES', 'name'], ascending=False)[:20]
         plot2.altair_chart(alt.Chart(data).mark_bar().encode(
             x=alt.X('APPEARANCES', axis=alt.Axis(title='Appearance')),
             y=alt.Y('name', sort='-x', axis=alt.Axis(title=f'Top {len(data)} Big Names')),
@@ -277,7 +278,8 @@ def show_character_distribution(data):
             'sum(pct):Q',
             axis=alt.Axis(format='%', title=f"Percentage of Characters with Different {y} Feature")),
         y=y,
-        tooltip=[y, alt.Tooltip('sum(pct):Q', format='.1%', title="Percentage")],
+        tooltip=[y, alt.Tooltip(
+            'sum(pct):Q', format='.1%', title="Percentage")],
     )
     plot.altair_chart(chart & bar, use_container_width=True)
     st.markdown('''
@@ -361,9 +363,9 @@ def show_heatmap(data):
     st.write('## Relationships of features')
     st.markdown('''
     What\'s the correlation between different features?'
-    
+
     The correlation is calculated by corrected Cramer\'s V, and it is a symmetric metric.
-    
+
     - The upper panel demonstrates intra-correlations (correlations between genetic features), \
     and the lower panel demonstrates inter-correlations (correlation between a genetic feature and an acquired identity,`ID` (or `ALIGN`)).
     - The left panel demonstrates the DC world, and the right panel demonstrates the Marvel world.
@@ -446,7 +448,7 @@ def show_heatmap(data):
     - The pair-wise correlations among {`HAIR`, `EYE`, `SEX`} are quite high. 
     - The correlation between `HAIR` and `EYE` of the Marvel world is consistently higher than then DC world over the years.
     - `GSM` has little correlation with other genetic features except for `SEX`. One possible reason is that most characters are of sexual and gender majority.
-    
+
     For inter-correlations:
     - Inter-correlations are higher in the Marvel world.
     - There is no strong inter-correlation between a single genetic feature and a single acquired identity (`ALIGN`, or `ID`).
@@ -457,10 +459,10 @@ def show_prediction(feature_importances):
     st.write('## Let\'s make predictions')
     st.markdown('''
     Can we predict one genetic feature given the other features?
-    
+
     We train a decision tree classifier for each of the response variable from {`SEX`, `EYE`, `HAIR`}, and visualize the Gini importance of the explanatory features, \
     as an interpretation of asymmetric correlations. 
-    
+
     The details of Gini importance are give in [the scikit-learn document](https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeClassifier.html?highlight=decision%20tree#sklearn.tree.DecisionTreeClassifier).
     ''')
 
@@ -478,17 +480,17 @@ def show_prediction(feature_importances):
         y=alt.Y('Variable', axis=alt.Axis(title='Explanatory Variables'),
                 sort='-x'),
         tooltip=['Importance'],
-    ).properties(height=500).interactive(), use_container_width=True)
+    ).interactive(), use_container_width=True)
     st.markdown('''
     The most decisive factor in predicting genetic features are the debut year \
     and the number of appearances (popularity) of the character. This is in line with our observations in the previous sections \
     that the distribution of genetic features changes over time and the world favors certain ethnicities.
-    
+
     Although previously we show that genetic features share correlations with each other, \
     the other two genetic features contribute little to the prediction of a certain genetic feature. \
     It is possible that the combination of the other two genetic features is predictive of the target response feature, \
     but we are unable to validate this using the APIs of the decision tree model.
-    
+
     Acquired identities are not predictive of the genetic features as well.
     ''')
 
