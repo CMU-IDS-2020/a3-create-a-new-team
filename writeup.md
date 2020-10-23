@@ -154,7 +154,7 @@ EDA and the initial design, which is summarized in `design.md`, is done by `memb
 
 ### Implementation
 
-In the first round, the layout and initial narrative of this project is designed by `member A` and the implementations of Playground A-D are mostly done by `member A`, which takes around 10 hours (including the tuning of details like dataset cleaning, dynamic docstring, and further modification of type of chart). The implementations of Playground E-F are mostly done by `member B`, which takes around 4 hours.
+In the first round, the layout and initial narrative of this project is designed by `member A` and the implementations of Playground A-D are mostly done by `member A`, which takes around 10 hours (also including the tuning of details like dataset cleaning, dynamic docstring). The implementations of Playground E-F are mostly done by `member B`, which takes around 4 hours.
 
 In the second round, both members iteratively enhance the layout, chart types, interactions, visual encodings and narratives for expressiveness of visualizations. This takes around 5 hours.
 
